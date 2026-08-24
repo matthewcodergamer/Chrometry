@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+  <meta name="theme-color" content="#f5f5f7">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Chrometry">
+  <meta name="description" content="Extract perceptual game palettes from screenshots and map colors to scene roles.">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./icon.svg">
+  <link rel="stylesheet" href="./styles.css">
+  <title>Chrometry — Game Palette Analyzer</title>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar glass">
+      <a class="brand" href="#" aria-label="Chrometry home">
+        <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span><strong>Chrometry</strong><small>GAME COLORIMETRY</small></span>
+      </a>
+      <div class="top-actions">
+        <button id="themeBtn" class="icon-btn" type="button" aria-label="Toggle appearance">◐</button>
+      </div>
+    </header>
+
+    <main>
+      <section id="intro" class="hero">
+        <div class="hero-copy">
+          <div class="eyebrow">PERCEPTUAL PALETTE ENGINE</div>
+          <h1>Capture a game's visual DNA.</h1>
+          <p>Drop in a screenshot from Minecraft, GTA, Call of Duty, or any other game. Chrometry measures the image in perceptual color space, builds a usable palette, and estimates scene roles like sky, vegetation, sunlight, earth, shadow, water, and accents.</p>
+          <div class="hero-chips"><span>CIELAB clustering</span><span>Local-first</span><span>Optional AI vision</span></div>
+        </div>
+        <label id="dropzone" class="dropzone" for="fileInput">
+          <input id="fileInput" type="file" accept="image/*" hidden>
+          <span class="drop-icon">＋</span>
+          <strong>Choose a game screenshot</strong>
+          <span>PNG, JPG, WEBP, HEIC where supported</span>
+          <span class="primary-button">Open image</span>
+        </label>
+      </section>
+
+      <section id="workspace" class="workspace hidden" aria-live="polite">
+        <div class="workspace-grid">
+          <div>
+            <section class="card glass">
+              <div class="section-head">
+                <div><span class="section-kicker">SOURCE</span><h2>Screenshot</h2></div>
+                <button id="replaceBtn" class="quiet-btn" type="button">Replace</button>
+              </div>
+              <div id="canvasStage" class="canvas-stage">
+                <canvas id="previewCanvas"></canvas>
+                <div id="sampleBubble" class="sample-bubble hidden"></div>
+              </div>
+              <div class="image-meta"><span id="imageName">—</span><span id="imageSize">—</span></div>
+              <p class="hint">Tap the image to sample an exact pixel color.</p>
+            </section>
+
+            <section class="card glass">
+              <div class="section-head">
+                <div><span class="section-kicker">PALETTE</span><h2>Measured colors</h2></div>
+                <span id="paletteStatus" class="status-pill">Ready</span>
+              </div>
+              <div id="paletteStrip" class="palette-strip"></div>
+              <div id="swatches" class="swatch-grid"></div>
+            </section>
+
+            <section class="card glass">
+              <div class="section-head">
+                <div><span class="section-kicker">SCENE MAP</span><h2>Likely material & lighting roles</h2></div>
+                <span class="local-badge">LOCAL</span>
+              </div>
+              <div id="roleGrid" class="role-grid"></div>
+              <p class="hint">These labels use color + screenshot position heuristics. AI Vision can refine them by actually looking at the scene.</p>
+            </section>
+          </div>
+
+          <aside>
+            <section class="card glass sticky-card">
+              <div class="section-head">
+                <div><span class="section-kicker">ANALYSIS</span><h2>Palette controls</h2></div>
+              </div>
+              <div class="control-row">
+                <label for="colorCount"><span>Palette size</span><b id="colorCountValue">10</b></label>
+                <input id="colorCount" type="range" min="4" max="18" value="10">
+              </div>
+              <div class="control-row">
+                <label for="detail"><span>Sampling detail</span><b id="detailValue">Balanced</b></label>
+                <input id="detail" type="range" min="1" max="3" value="2">
+              </div>
+              <button id="analyzeBtn" class="action-btn" type="button">Analyze palette</button>
+
+              <div class="activity">
+                <div class="activity-title"><span>Activity</span><span id="progressLabel">Idle</span></div>
+                <div class="progress-track"><div id="progressBar" class="progress-bar"></div></div>
+                <div id="log" class="log"></div>
+              </div>
+            </section>
+
+            <section class="card glass">
+              <div class="section-head">
+                <div><span class="section-kicker">AI VISION</span><h2>Understand the scene</h2></div>
+                <span id="aiBadge" class="status-pill neutral">Optional</span>
+              </div>
+              <p class="small-copy">Ask AI to inspect the screenshot, identify the game when possible, and map palette colors to actual things in the image. Powered through Puter.js; no developer API key is stored in this project.</p>
+              <button id="aiBtn" class="action-btn secondary" type="button">Analyze scene with AI</button>
+              <div id="aiOutput" class="ai-output empty-state">No AI analysis yet. Local palette extraction works without it.</div>
+            </section>
+
+            <section class="card glass">
+              <div class="section-head">
+                <div><span class="section-kicker">EXPORT</span><h2>Use it in your game</h2></div>
+              </div>
+              <div class="export-tabs" role="tablist">
+                <button class="export-tab active" data-format="json" type="button">JSON</button>
+                <button class="export-tab" data-format="css" type="button">CSS</button>
+                <button class="export-tab" data-format="three" type="button">Three.js</button>
+              </div>
+              <pre id="exportCode">Analyze a screenshot to generate export code.</pre>
+              <div class="export-actions">
+                <button id="copyBtn" class="quiet-btn" type="button">Copy</button>
+                <button id="downloadBtn" class="quiet-btn strong" type="button">Download</button>
+              </div>
+            </section>
+          </aside>
+        </div>
+      </section>
+    </main>
+
+    <footer><span>Chrometry 1.0</span><span>Color data stays on-device unless you choose AI Vision.</span></footer>
+  </div>
+
+  <script src="https://js.puter.com/v2/"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
