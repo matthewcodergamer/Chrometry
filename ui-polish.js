@@ -130,5 +130,130 @@
     });
   }
 
+  // Measured-color locator: tapping a swatch or palette segment finds a representative
+  // pixel of that perceptual color in the screenshot, scrolls the source into view,
+  // and marks the location with a small iOS-red pointer and ring.
+  const canvasStage = document.getElementById('canvasStage');
+  const previewCanvas = document.getElementById('previewCanvas');
+  let locator = null;
+  let locatorTimer = null;
+
+  function hexToRgb(hex) {
+    const m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(String(hex || ''));
+    return m ? {r:parseInt(m[1],16), g:parseInt(m[2],16), b:parseInt(m[3],16)} : null;
+  }
+
+  function rgbToLab(r,g,b) {
+    let R=r/255,G=g/255,B=b/255;
+    R=R>.04045?Math.pow((R+.055)/1.055,2.4):R/12.92;
+    G=G>.04045?Math.pow((G+.055)/1.055,2.4):G/12.92;
+    B=B>.04045?Math.pow((B+.055)/1.055,2.4):B/12.92;
+    let x=(R*.4124+G*.3576+B*.1805)/.95047;
+    let y=(R*.2126+G*.7152+B*.0722);
+    let z=(R*.0193+G*.1192+B*.9505)/1.08883;
+    const f=t=>t>.008856?Math.cbrt(t):7.787*t+16/116;
+    x=f(x);y=f(y);z=f(z);
+    return [116*y-16,500*(x-y),200*(y-z)];
+  }
+
+  function labDistance2(a,b) {
+    const dl=a[0]-b[0], da=a[1]-b[1], db=a[2]-b[2];
+    return dl*dl+da*da+db*db;
+  }
+
+  function findRepresentativePixel(hex) {
+    if (!previewCanvas?.width || !previewCanvas?.height) return null;
+    const rgb = hexToRgb(hex);
+    if (!rgb) return null;
+    const target = rgbToLab(rgb.r,rgb.g,rgb.b);
+    const ctx = previewCanvas.getContext('2d', {willReadFrequently:true});
+    const {width:w,height:h} = previewCanvas;
+    const data = ctx.getImageData(0,0,w,h).data;
+    const step = Math.max(1, Math.round(Math.max(w,h)/280));
+    let minD = Infinity;
+
+    for (let y=0; y<h; y+=step) {
+      for (let x=0; x<w; x+=step) {
+        const i=(y*w+x)*4;
+        if (data[i+3] < 220) continue;
+        const d=labDistance2(target,rgbToLab(data[i],data[i+1],data[i+2]));
+        if (d<minD) minD=d;
+      }
+    }
+    if (!Number.isFinite(minD)) return null;
+
+    const threshold = Math.pow(Math.max(10, Math.sqrt(minD)+7),2);
+    let sx=0,sy=0,count=0;
+    for (let y=0; y<h; y+=step) {
+      for (let x=0; x<w; x+=step) {
+        const i=(y*w+x)*4;
+        if (data[i+3] < 220) continue;
+        const d=labDistance2(target,rgbToLab(data[i],data[i+1],data[i+2]));
+        if (d<=threshold) { sx+=x; sy+=y; count++; }
+      }
+    }
+    if (!count) return null;
+
+    const cx=sx/count, cy=sy/count;
+    let best=null, bestScore=Infinity;
+    for (let y=0; y<h; y+=step) {
+      for (let x=0; x<w; x+=step) {
+        const i=(y*w+x)*4;
+        if (data[i+3] < 220) continue;
+        const d=labDistance2(target,rgbToLab(data[i],data[i+1],data[i+2]));
+        if (d>threshold) continue;
+        const spatial=((x-cx)*(x-cx)+(y-cy)*(y-cy))/Math.max(1,w*w+h*h);
+        const score=d + spatial*160;
+        if (score<bestScore) { bestScore=score; best={x:(x+.5)/w,y:(y+.5)/h}; }
+      }
+    }
+    return best;
+  }
+
+  function ensureLocator() {
+    if (locator || !canvasStage) return locator;
+    locator = document.createElement('div');
+    locator.className = 'color-locator';
+    locator.setAttribute('aria-hidden','true');
+    locator.innerHTML = '<span class="color-locator-label"></span><span class="color-locator-arrow"></span><span class="color-locator-ring"></span>';
+    canvasStage.appendChild(locator);
+    return locator;
+  }
+
+  function showColorLocation(hex, sourceButton) {
+    const point = findRepresentativePixel(hex);
+    if (!point || !canvasStage || !previewCanvas) return;
+    const marker = ensureLocator();
+    const stageRect = canvasStage.getBoundingClientRect();
+    const canvasRect = previewCanvas.getBoundingClientRect();
+    const left = canvasRect.left-stageRect.left + point.x*canvasRect.width;
+    const top = canvasRect.top-stageRect.top + point.y*canvasRect.height;
+    marker.style.left = `${left}px`;
+    marker.style.top = `${top}px`;
+    marker.querySelector('.color-locator-label').textContent = hex.toUpperCase();
+    marker.classList.remove('visible');
+    void marker.offsetWidth;
+    marker.classList.add('visible');
+
+    document.querySelectorAll('.swatch.color-located,.palette-segment.color-located').forEach(el=>el.classList.remove('color-located'));
+    sourceButton?.classList.add('color-located');
+
+    canvasStage.scrollIntoView({behavior:'smooth',block:'center',inline:'nearest'});
+    window.clearTimeout(locatorTimer);
+    locatorTimer = window.setTimeout(() => {
+      marker.classList.remove('visible');
+      sourceButton?.classList.remove('color-located');
+    }, 5200);
+  }
+
+  document.addEventListener('click', event => {
+    const colorButton = event.target.closest('#swatches .swatch, #paletteStrip .palette-segment');
+    if (!colorButton) return;
+    let hex = colorButton.querySelector('b')?.textContent?.trim();
+    if (!hex) hex = colorButton.title?.match(/#[0-9A-Fa-f]{6}/)?.[0];
+    if (!hex) return;
+    window.requestAnimationFrame(() => showColorLocation(hex, colorButton));
+  });
+
   document.addEventListener('contextmenu', event => event.preventDefault(), { passive: false });
 })();
