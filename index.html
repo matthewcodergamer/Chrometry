@@ -2,14 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover,user-scalable=no">
-  <meta name="theme-color" content="#f5f5f7">
-  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no,maximum-scale=1">
+  <meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#08080a" media="(prefers-color-scheme: dark)">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Chrometry">
   <meta name="format-detection" content="telephone=no">
-  <meta name="description" content="Extract perceptual game palettes from screenshots and map colors to scene roles.">
+  <meta name="description" content="Extract perceptual game palettes from screenshots and refine them with optional AI scene understanding.">
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" href="./icon-v2.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="./icon-v2.svg">
@@ -17,32 +17,33 @@
   <title>Chrometry — Game Palette Analyzer</title>
 </head>
 <body>
-  <div class="app-shell" role="application" aria-label="Chrometry">
+  <div class="app-shell">
     <header class="topbar glass">
       <a class="brand" href="#" aria-label="Chrometry home">
         <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
-        <span><strong>Chrometry</strong><small>GAME COLORIMETRY</small></span>
+        <span class="brand-copy"><strong>Chrometry</strong><small>GAME COLORIMETRY</small></span>
       </a>
-      <div class="top-actions">
-        <button id="themeBtn" class="icon-btn" type="button" aria-label="Toggle appearance">◐</button>
-      </div>
+      <span id="themeIndicator" class="appearance-indicator" role="img" aria-label="Appearance follows iOS">◐</span>
     </header>
 
-    <main>
+    <main id="appScroll" class="app-scroll">
       <section id="intro" class="hero">
         <div class="hero-copy">
           <div class="eyebrow">PERCEPTUAL PALETTE ENGINE</div>
           <h1>Capture a game's visual DNA.</h1>
           <p>Drop in a screenshot from Minecraft, GTA, Call of Duty, or any other game. Chrometry measures the image in perceptual color space, builds a usable palette, and estimates scene roles like sky, vegetation, sunlight, earth, shadow, water, and accents.</p>
-          <div class="hero-chips"><span>CIELAB clustering</span><span>Local-first</span><span>Optional AI vision</span></div>
+          <div class="hero-chips"><span>CIELAB clustering</span><span>Local-first</span><span>AI refinement</span></div>
         </div>
-        <label id="dropzone" class="dropzone" for="fileInput">
-          <input id="fileInput" type="file" accept="image/*" hidden>
-          <span class="drop-icon">＋</span>
-          <strong>Choose a game screenshot</strong>
-          <span>PNG, JPG, WEBP, HEIC where supported</span>
-          <span class="primary-button">Open image</span>
-        </label>
+
+        <div class="upload-wrap">
+          <label id="dropzone" class="dropzone" for="fileInput">
+            <input id="fileInput" type="file" accept="image/*" hidden>
+            <span class="drop-icon">＋</span>
+            <strong>Choose a game screenshot</strong>
+            <span>PNG, JPG, WEBP, HEIC where supported</span>
+            <span class="primary-button">Open image</span>
+          </label>
+        </div>
       </section>
 
       <section id="workspace" class="workspace hidden" aria-live="polite">
@@ -72,11 +73,11 @@
 
             <section class="card glass">
               <div class="section-head">
-                <div><span class="section-kicker">SCENE MAP</span><h2>Likely material & lighting roles</h2></div>
-                <span class="local-badge">LOCAL</span>
+                <div><span class="section-kicker">SCENE MAP</span><h2>Material & lighting roles</h2></div>
+                <span id="roleMode" class="local-badge">LOCAL</span>
               </div>
               <div id="roleGrid" class="role-grid"></div>
-              <p class="hint">These labels use color + screenshot position heuristics. AI Vision can refine them by actually looking at the scene.</p>
+              <p id="roleHint" class="hint">Local labels use color + screenshot position heuristics. AI Refinement can remove borders/HUD artifacts and rebuild the palette around the actual game scene.</p>
             </section>
           </div>
 
@@ -102,14 +103,14 @@
               </div>
             </section>
 
-            <section class="card glass">
+            <section class="card glass ai-card-shell">
               <div class="section-head">
-                <div><span class="section-kicker">AI VISION</span><h2>Understand the scene</h2></div>
+                <div><span class="section-kicker">AI REFINEMENT</span><h2>Understand & rebuild</h2></div>
                 <span id="aiBadge" class="status-pill neutral">Optional</span>
               </div>
-              <p class="small-copy">Ask AI to inspect the screenshot, identify the game when possible, and map palette colors to actual things in the image. Powered through Puter.js; no developer API key is stored in this project.</p>
-              <button id="aiBtn" class="action-btn secondary" type="button">Analyze scene with AI</button>
-              <div id="aiOutput" class="ai-output empty-state">No AI analysis yet. Local palette extraction works without it.</div>
+              <p class="small-copy">AI identifies the real gameplay area, ignores screenshot borders/HUD contamination when appropriate, maps colors to actual scene objects, then Chrometry re-clusters the accepted pixels and regenerates your export.</p>
+              <button id="aiBtn" class="action-btn secondary" type="button">Refine palette with AI</button>
+              <div id="aiOutput" class="ai-output empty-state">No AI refinement yet. Local palette extraction works without it.</div>
             </section>
 
             <section class="card glass">
@@ -131,8 +132,6 @@
         </div>
       </section>
     </main>
-
-    <footer><span>Chrometry 1.1</span><span>On-device color analysis • AI only when requested</span></footer>
   </div>
 
   <script src="https://js.puter.com/v2/"></script>
