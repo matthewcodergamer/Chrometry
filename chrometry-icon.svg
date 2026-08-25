@@ -34,11 +34,10 @@
     </linearGradient>
   </defs>
 
-  <!-- One crisp full-bleed dark master. iOS/Safari apply their own outer masking. -->
   <rect width="1024" height="1024" fill="url(#bg)"/>
   <rect width="1024" height="1024" fill="url(#bgSheen)"/>
 
-  <!-- No SVG blur/filter here: these exact edges rasterize cleanly for the header and Home Screen. -->
+  <!-- Blue and yellow are the same shorter height; green is the single tallest bar. -->
   <g>
     <rect x="158" y="232" width="176" height="560" rx="88" fill="url(#blue)"/>
     <rect x="162" y="236" width="168" height="552" rx="84" fill="none" stroke="#FFFFFF" stroke-opacity=".14" stroke-width="6"/>
@@ -50,8 +49,8 @@
     <path d="M471 223c0-34 27-61 61-61" fill="none" stroke="url(#edgeSpec)" stroke-width="11" stroke-linecap="round"/>
   </g>
   <g>
-    <rect x="690" y="205" width="176" height="614" rx="88" fill="url(#gold)"/>
-    <rect x="694" y="209" width="168" height="606" rx="84" fill="none" stroke="#FFFFFF" stroke-opacity=".15" stroke-width="6"/>
-    <path d="M737 282c0-34 27-61 61-61" fill="none" stroke="url(#edgeSpec)" stroke-width="11" stroke-linecap="round"/>
+    <rect x="690" y="232" width="176" height="560" rx="88" fill="url(#gold)"/>
+    <rect x="694" y="236" width="168" height="552" rx="84" fill="none" stroke="#FFFFFF" stroke-opacity=".15" stroke-width="6"/>
+    <path d="M737 309c0-34 27-61 61-61" fill="none" stroke="url(#edgeSpec)" stroke-width="11" stroke-linecap="round"/>
   </g>
 </svg>
