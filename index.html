@@ -2,20 +2,22 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover,user-scalable=no">
   <meta name="theme-color" content="#f5f5f7">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Chrometry">
+  <meta name="format-detection" content="telephone=no">
   <meta name="description" content="Extract perceptual game palettes from screenshots and map colors to scene roles.">
   <link rel="manifest" href="./manifest.webmanifest">
-  <link rel="icon" href="./icon.svg" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="./icon.svg">
+  <link rel="icon" href="./icon-v2.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./icon-v2.svg">
   <link rel="stylesheet" href="./styles.css">
   <title>Chrometry — Game Palette Analyzer</title>
 </head>
 <body>
-  <div class="app-shell">
+  <div class="app-shell" role="application" aria-label="Chrometry">
     <header class="topbar glass">
       <a class="brand" href="#" aria-label="Chrometry home">
         <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
@@ -130,7 +132,7 @@
       </section>
     </main>
 
-    <footer><span>Chrometry 1.0</span><span>Color data stays on-device unless you choose AI Vision.</span></footer>
+    <footer><span>Chrometry 1.1</span><span>On-device color analysis • AI only when requested</span></footer>
   </div>
 
   <script src="https://js.puter.com/v2/"></script>
