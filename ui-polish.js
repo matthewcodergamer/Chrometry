@@ -18,18 +18,23 @@
 
   const preferredAppearance = () => savedAppearance() || (systemTheme.matches ? 'dark' : 'light');
 
+  const themeIcon = mode => mode === 'dark'
+    ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.2 14.8A7.6 7.6 0 0 1 9.2 4.8 7.9 7.9 0 1 0 19.2 14.8Z"/></svg>'
+    : '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.6"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M18.7 5.3l-1.4 1.4M6.7 17.3l-1.4 1.4"/></svg>';
+
   function applyAppearance(mode, animate = false) {
     const next = mode === 'dark' ? 'dark' : 'light';
     if (animate) {
-      root.classList.remove('theme-changing');
+      root.classList.remove('theme-switching');
       void root.offsetWidth;
-      root.classList.add('theme-changing');
-      window.setTimeout(() => root.classList.remove('theme-changing'), 420);
+      root.classList.add('theme-switching');
+      window.setTimeout(() => root.classList.remove('theme-switching'), 420);
     }
     root.dataset.appearance = next;
     root.style.colorScheme = next;
     if (themeColor) themeColor.content = next === 'dark' ? '#08080a' : '#f5f5f7';
     if (themeButton) {
+      themeButton.innerHTML = themeIcon(next);
       themeButton.setAttribute('aria-label', next === 'dark' ? 'Switch to light appearance' : 'Switch to dark appearance');
       themeButton.setAttribute('aria-pressed', next === 'dark' ? 'true' : 'false');
       themeButton.dataset.mode = next;
