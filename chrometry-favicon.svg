@@ -1,12 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="Chrometry">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#24262C"/><stop offset="1" stop-color="#08090B"/></linearGradient>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#F5F5F7"/></linearGradient>
     <linearGradient id="blue" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8FC5FF"/><stop offset="1" stop-color="#4E90F4"/></linearGradient>
     <linearGradient id="green" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#93EDB1"/><stop offset="1" stop-color="#55C975"/></linearGradient>
     <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFE495"/><stop offset="1" stop-color="#F6BE49"/></linearGradient>
   </defs>
-  <rect x="26" y="26" width="972" height="972" rx="226" fill="url(#bg)"/>
-  <rect x="163" y="210" width="171" height="604" rx="86" fill="url(#blue)" stroke="#fff" stroke-opacity=".23" stroke-width="8"/>
-  <rect x="427" y="163" width="171" height="698" rx="86" fill="url(#green)" stroke="#fff" stroke-opacity=".23" stroke-width="8"/>
-  <rect x="691" y="210" width="171" height="604" rx="86" fill="url(#gold)" stroke="#fff" stroke-opacity=".23" stroke-width="8"/>
+  <rect x="26" y="26" width="972" height="972" rx="226" fill="url(#bg)" stroke="#000" stroke-opacity=".06" stroke-width="10"/>
+  <rect x="163" y="210" width="171" height="604" rx="86" fill="url(#blue)"/>
+  <rect x="427" y="163" width="171" height="698" rx="86" fill="url(#green)"/>
+  <rect x="691" y="210" width="171" height="604" rx="86" fill="url(#gold)"/>
 </svg>
