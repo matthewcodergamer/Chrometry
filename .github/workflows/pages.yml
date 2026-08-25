@@ -24,6 +24,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
+      - name: Build Chrometry release assets
+        shell: bash
+        run: |
+          base64 -d app-v1-3.b64 > app.js
+          echo "f12a4c374f1068471ea71c7078f6bc67775c0add24505d7049a7d25ea8150609  app.js" | sha256sum -c -
+          node --check app.js
+
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends librsvg2-bin
+          rsvg-convert -w 180 -h 180 icon-liquid.svg -o apple-touch-icon.png
+          rsvg-convert -w 192 -h 192 icon-liquid.svg -o icon-192.png
+          rsvg-convert -w 512 -h 512 icon-liquid.svg -o icon-512.png
+
+          test -s apple-touch-icon.png
+          test -s icon-192.png
+          test -s icon-512.png
+          rm -f app-v1-3.b64
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
