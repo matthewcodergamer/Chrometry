@@ -1,40 +1,62 @@
 :root{
-  --header-edge:rgba(255,255,255,.62);
-  --header-shadow:0 10px 28px rgba(20,20,30,.07);
-  --control-edge:rgba(0,0,0,.08);
+  --header-edge:rgba(0,0,0,.10);
+  --header-shadow:0 10px 28px rgba(20,20,30,.06);
+  --control-edge:rgba(0,0,0,.10);
 }
 @media(prefers-color-scheme:dark){
   :root{
-    --header-edge:rgba(255,255,255,.15);
-    --header-shadow:0 12px 30px rgba(0,0,0,.24);
-    --control-edge:rgba(255,255,255,.13);
+    --header-edge:rgba(255,255,255,.22);
+    --header-shadow:0 10px 28px rgba(0,0,0,.18);
+    --control-edge:rgba(255,255,255,.17);
   }
 }
 
-/* Keep the header quiet while giving its whole perimeter the soft,
-   even edge separation used by iOS dark controls. */
+/* One canonical mark everywhere: header, favicon, PWA and Home Screen. */
+.brand-mark{
+  padding:0;
+  overflow:hidden;
+  background:url('./chrometry-icon.svg') center/cover no-repeat;
+  box-shadow:0 4px 12px rgba(0,0,0,.10);
+}
+.brand-mark i{display:none!important}
+
+/* Keep the header calm while giving the full perimeter an even iOS-style
+   separation. No top/bottom highlight overlay, so scrolling stays quiet. */
 .topbar{
+  border:0;
   box-shadow:inset 0 0 0 1px var(--header-edge),var(--header-shadow);
 }
-.topbar::before{display:none}
-
-/* The appearance indicator is a true iOS-style circular control. */
-.appearance-indicator{
-  border-radius:50%;
-  box-shadow:
-    inset 0 0 0 1px var(--control-edge),
-    inset 0 1px 0 rgba(255,255,255,.20),
-    inset 0 -1px 0 rgba(255,255,255,.045),
-    0 4px 14px rgba(0,0,0,.07);
-}
+.topbar::before{display:none!important}
 
 @media(prefers-color-scheme:dark){
-  .appearance-indicator{
-    background:rgba(50,50,56,.72);
+  .topbar.glass{
+    background:rgba(31,31,36,.78);
+    backdrop-filter:blur(30px) saturate(1.28);
+    -webkit-backdrop-filter:blur(30px) saturate(1.28);
     box-shadow:
-      inset 0 0 0 1px var(--control-edge),
-      inset 0 1px 0 rgba(255,255,255,.16),
-      inset 0 -1px 0 rgba(255,255,255,.035),
-      0 5px 16px rgba(0,0,0,.18);
+      inset 0 0 0 1px rgba(255,255,255,.22),
+      0 0 0 .5px rgba(255,255,255,.035),
+      0 10px 28px rgba(0,0,0,.18);
+  }
+}
+
+/* A true circular system-appearance control, matching iOS toolbar controls. */
+.appearance-indicator{
+  width:44px;
+  height:44px;
+  aspect-ratio:1;
+  flex:0 0 44px;
+  border-radius:50%!important;
+  border:0;
+  box-shadow:
+    inset 0 0 0 1px var(--control-edge),
+    0 4px 12px rgba(0,0,0,.06);
+}
+@media(prefers-color-scheme:dark){
+  .appearance-indicator{
+    background:rgba(46,46,52,.78);
+    box-shadow:
+      inset 0 0 0 1px rgba(255,255,255,.17),
+      0 4px 14px rgba(0,0,0,.14);
   }
 }
