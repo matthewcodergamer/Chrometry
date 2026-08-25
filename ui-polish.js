@@ -51,7 +51,7 @@
   });
 
   systemTheme.addEventListener?.('change', () => {
-    if (!savedAppearance()) applyAppearance(systemTheme.matches ? 'dark' : 'light', true);
+    applyAppearance(savedAppearance() || (systemTheme.matches ? 'dark' : 'light'), true);
   });
 
   const dropzone = document.getElementById('dropzone');
