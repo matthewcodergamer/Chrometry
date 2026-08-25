@@ -5,11 +5,12 @@
   const themeButton = document.getElementById('themeIndicator');
   const themeColor = document.getElementById('themeColor');
   const systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
-  const storageKey = 'chrometry-appearance';
+  const themeStorageKey = 'chrometry-appearance';
+  const prefsStorageKey = 'chrometry-ui-preferences-v1';
 
   const savedAppearance = () => {
     try {
-      const value = localStorage.getItem(storageKey);
+      const value = localStorage.getItem(themeStorageKey);
       return value === 'light' || value === 'dark' ? value : null;
     } catch {
       return null;
@@ -28,7 +29,7 @@
       root.classList.remove('theme-switching');
       void root.offsetWidth;
       root.classList.add('theme-switching');
-      window.setTimeout(() => root.classList.remove('theme-switching'), 420);
+      window.setTimeout(() => root.classList.remove('theme-switching'), 440);
     }
     root.dataset.appearance = next;
     root.style.colorScheme = next;
@@ -46,13 +47,52 @@
   themeButton?.addEventListener('click', () => {
     const current = root.dataset.appearance === 'dark' ? 'dark' : 'light';
     const next = current === 'dark' ? 'light' : 'dark';
-    try { localStorage.setItem(storageKey, next); } catch {}
+    try { localStorage.setItem(themeStorageKey, next); } catch {}
     applyAppearance(next, true);
   });
 
   systemTheme.addEventListener?.('change', () => {
     applyAppearance(savedAppearance() || (systemTheme.matches ? 'dark' : 'light'), true);
   });
+
+  function readPreferences() {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(prefsStorageKey) || '{}');
+      return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch {
+      return {};
+    }
+  }
+
+  function writePreferences(patch) {
+    try {
+      const current = readPreferences();
+      localStorage.setItem(prefsStorageKey, JSON.stringify({...current, ...patch}));
+    } catch {}
+  }
+
+  const colorCount = document.getElementById('colorCount');
+  const detail = document.getElementById('detail');
+  const exportTabs = [...document.querySelectorAll('.export-tab')];
+  const prefs = readPreferences();
+
+  if (colorCount && Number.isFinite(Number(prefs.colorCount))) {
+    const value = Math.max(Number(colorCount.min), Math.min(Number(colorCount.max), Number(prefs.colorCount)));
+    colorCount.value = String(value);
+    colorCount.dispatchEvent(new Event('input', {bubbles:true}));
+  }
+  if (detail && Number.isFinite(Number(prefs.detail))) {
+    const value = Math.max(Number(detail.min), Math.min(Number(detail.max), Number(prefs.detail)));
+    detail.value = String(value);
+    detail.dispatchEvent(new Event('input', {bubbles:true}));
+  }
+  if (typeof prefs.exportFormat === 'string') {
+    exportTabs.find(tab => tab.dataset.format === prefs.exportFormat)?.click();
+  }
+
+  colorCount?.addEventListener('input', () => writePreferences({colorCount:Number(colorCount.value)}));
+  detail?.addEventListener('input', () => writePreferences({detail:Number(detail.value)}));
+  exportTabs.forEach(tab => tab.addEventListener('click', () => writePreferences({exportFormat:tab.dataset.format})));
 
   const dropzone = document.getElementById('dropzone');
   const openImageButton = document.getElementById('openImageBtn');
