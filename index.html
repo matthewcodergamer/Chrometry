@@ -11,8 +11,11 @@
   <meta name="format-detection" content="telephone=no">
   <meta name="description" content="Extract perceptual game palettes from screenshots and refine them with optional AI scene understanding.">
   <link rel="manifest" href="./manifest.webmanifest">
-  <link rel="icon" href="./icon-v2.svg" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="./icon-v2.svg">
+  <link rel="icon" href="./icon-liquid.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./apple-touch-icon.png">
+  <link rel="apple-touch-icon" sizes="152x152" href="./apple-touch-icon-152.png">
+  <link rel="apple-touch-icon" sizes="167x167" href="./apple-touch-icon-167.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png">
   <link rel="stylesheet" href="./styles.css">
   <title>Chrometry — Game Palette Analyzer</title>
 </head>
@@ -31,7 +34,7 @@
         <div class="hero-copy">
           <div class="eyebrow">PERCEPTUAL PALETTE ENGINE</div>
           <h1>Capture a game's visual DNA.</h1>
-          <p>Drop in a screenshot from Minecraft, GTA, Call of Duty, or any other game. Chrometry measures the image in perceptual color space, builds a usable palette, and estimates scene roles like sky, vegetation, sunlight, earth, shadow, water, and accents.</p>
+          <p>Drop in a game screenshot — or any image you want to study. Chrometry measures the image in perceptual color space, builds a usable palette, and optional AI determines what the image actually is before assigning semantic colors.</p>
           <div class="hero-chips"><span>CIELAB clustering</span><span>Local-first</span><span>AI refinement</span></div>
         </div>
 
@@ -39,7 +42,7 @@
           <label id="dropzone" class="dropzone" for="fileInput">
             <input id="fileInput" type="file" accept="image/*" hidden>
             <span class="drop-icon">＋</span>
-            <strong>Choose a game screenshot</strong>
+            <strong>Choose a screenshot</strong>
             <span>PNG, JPG, WEBP, HEIC where supported</span>
             <span class="primary-button">Open image</span>
           </label>
@@ -49,7 +52,7 @@
       <section id="workspace" class="workspace hidden" aria-live="polite">
         <div class="workspace-grid">
           <div>
-            <section class="card glass">
+            <section class="card">
               <div class="section-head">
                 <div><span class="section-kicker">SOURCE</span><h2>Screenshot</h2></div>
                 <button id="replaceBtn" class="quiet-btn" type="button">Replace</button>
@@ -62,7 +65,7 @@
               <p class="hint">Tap the image to sample an exact pixel color.</p>
             </section>
 
-            <section class="card glass">
+            <section class="card">
               <div class="section-head">
                 <div><span class="section-kicker">PALETTE</span><h2>Measured colors</h2></div>
                 <span id="paletteStatus" class="status-pill">Ready</span>
@@ -71,18 +74,18 @@
               <div id="swatches" class="swatch-grid"></div>
             </section>
 
-            <section class="card glass">
+            <section class="card">
               <div class="section-head">
-                <div><span class="section-kicker">SCENE MAP</span><h2>Material & lighting roles</h2></div>
+                <div><span class="section-kicker">SEMANTIC MAP</span><h2>Color roles</h2></div>
                 <span id="roleMode" class="local-badge">LOCAL</span>
               </div>
               <div id="roleGrid" class="role-grid"></div>
-              <p id="roleHint" class="hint">Local labels use color + screenshot position heuristics. AI Refinement can remove borders/HUD artifacts and rebuild the palette around the actual game scene.</p>
+              <p id="roleHint" class="hint">Local labels are fast visual heuristics. AI Refinement first determines whether the image is a game, app UI, photo, artwork, or something else, then rebuilds the semantic palette appropriately.</p>
             </section>
           </div>
 
           <aside>
-            <section class="card glass sticky-card">
+            <section class="card sticky-card">
               <div class="section-head">
                 <div><span class="section-kicker">ANALYSIS</span><h2>Palette controls</h2></div>
               </div>
@@ -103,19 +106,19 @@
               </div>
             </section>
 
-            <section class="card glass ai-card-shell">
+            <section class="card ai-card-shell">
               <div class="section-head">
                 <div><span class="section-kicker">AI REFINEMENT</span><h2>Understand & rebuild</h2></div>
                 <span id="aiBadge" class="status-pill neutral">Optional</span>
               </div>
-              <p class="small-copy">AI identifies the real gameplay area, ignores screenshot borders/HUD contamination when appropriate, maps colors to actual scene objects, then Chrometry re-clusters the accepted pixels and regenerates your export.</p>
+              <p class="small-copy">AI first identifies the content type, then ignores accidental borders or capture chrome, maps colors to the correct kind of semantic targets, re-clusters the accepted pixels, and regenerates your export. Game-specific roles are only used for actual game screenshots.</p>
               <button id="aiBtn" class="action-btn secondary" type="button">Refine palette with AI</button>
               <div id="aiOutput" class="ai-output empty-state">No AI refinement yet. Local palette extraction works without it.</div>
             </section>
 
-            <section class="card glass">
+            <section class="card">
               <div class="section-head">
-                <div><span class="section-kicker">EXPORT</span><h2>Use it in your game</h2></div>
+                <div><span class="section-kicker">EXPORT</span><h2>Use the palette</h2></div>
               </div>
               <div class="export-tabs" role="tablist">
                 <button class="export-tab active" data-format="json" type="button">JSON</button>
