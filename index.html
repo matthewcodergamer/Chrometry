@@ -5,14 +5,15 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no,maximum-scale=1">
   <meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#08080a" media="(prefers-color-scheme: dark)">
+  <meta id="themeColor" name="theme-color" content="#f5f5f7">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Chrometry">
   <meta name="format-detection" content="telephone=no">
   <meta name="description" content="Extract perceptual palettes from games and other images with optional AI content-aware refinement.">
   <link rel="manifest" href="./manifest.webmanifest">
-  <link rel="icon" href="./chrometry-icon.svg" type="image/svg+xml">
-  <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon-v5.png">
+  <link rel="icon" href="./chrometry-favicon.svg?v=6" type="image/svg+xml">
+  <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon-v6.png">
   <link rel="stylesheet" href="./styles.css">
   <link rel="stylesheet" href="./ios-polish.css">
   <title>Chrometry — Game & Image Palette Analyzer</title>
@@ -24,7 +25,7 @@
         <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
         <span class="brand-copy"><strong>Chrometry</strong><small>GAME COLORIMETRY</small></span>
       </a>
-      <span id="themeIndicator" class="appearance-indicator" role="img" aria-label="Appearance follows iOS">◐</span>
+      <button id="themeIndicator" class="appearance-indicator" type="button" aria-label="Switch appearance" aria-pressed="false">◐</button>
     </header>
 
     <main id="appScroll" class="app-scroll">
@@ -37,13 +38,13 @@
         </div>
 
         <div class="upload-wrap">
-          <label id="dropzone" class="dropzone" for="fileInput">
+          <div id="dropzone" class="dropzone" role="button" tabindex="0" aria-label="Choose a screenshot">
             <input id="fileInput" type="file" accept="image/*" hidden>
-            <span class="drop-icon">＋</span>
+            <span class="drop-icon" aria-hidden="true">＋</span>
             <strong>Choose a screenshot</strong>
             <span>PNG, JPG, WEBP, HEIC where supported</span>
-            <span class="primary-button">Open image</span>
-          </label>
+            <button id="openImageBtn" class="primary-button" type="button">Open image</button>
+          </div>
         </div>
       </section>
 
@@ -125,8 +126,14 @@
               </div>
               <pre id="exportCode">Analyze a screenshot to generate export code.</pre>
               <div class="export-actions">
-                <button id="copyBtn" class="quiet-btn" type="button">Copy</button>
-                <button id="downloadBtn" class="quiet-btn strong" type="button">Download</button>
+                <button id="copyBtn" class="quiet-btn" type="button" aria-label="Copy code" title="Copy code">
+                  <svg class="sf-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="11" height="11" rx="2.5"/><path d="M16 8V6.5A2.5 2.5 0 0 0 13.5 4h-7A2.5 2.5 0 0 0 4 6.5v7A2.5 2.5 0 0 0 6.5 16H8"/></svg>
+                  <span class="visually-hidden">Copy</span>
+                </button>
+                <button id="downloadBtn" class="quiet-btn strong" type="button" aria-label="Download palette" title="Download palette">
+                  <svg class="sf-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11"/><path d="m8 10 4 4 4-4"/><path d="M5 17.5v1A2.5 2.5 0 0 0 7.5 21h9a2.5 2.5 0 0 0 2.5-2.5v-1"/></svg>
+                  <span class="visually-hidden">Download</span>
+                </button>
               </div>
             </section>
           </aside>
@@ -137,5 +144,6 @@
 
   <script src="https://js.puter.com/v2/"></script>
   <script src="./app.js"></script>
+  <script src="./ui-polish.js"></script>
 </body>
 </html>
