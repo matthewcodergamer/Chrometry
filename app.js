@@ -14,7 +14,7 @@
   const state = {
     file:null, image:null, imageUrl:null, sourceCanvas:null,
     rawSamples:[], localPalette:[], palette:[], roles:[], exportFormat:'json',
-    ai:null, refinement:null, analysisMode:'local'
+    ai:null, refinement:null, analysisMode:'local', contentType:'unknown', isGame:null
   };
   const detailNames = {1:'Fast',2:'Balanced',3:'Fine'};
   const roleDefinitions = {
@@ -22,11 +22,21 @@
     grass_vegetation:{name:'Vegetation / grass', exportKey:'vegetation_grass'},
     terrain_earth:{name:'Earth / terrain', exportKey:'earth_terrain'},
     sunlight_highlight:{name:'Sunlight / highlight', exportKey:'sunlight_highlight'},
-    shadow:{name:'Shadow / AO', exportKey:'shadow_ao'},
     water:{name:'Water / cool material', exportKey:'water_cool_material'},
     architecture:{name:'Architecture / structure', exportKey:'architecture_structure'},
-    accent:{name:'Accent / signage', exportKey:'accent_signage'}
+    background:{name:'Background / field', exportKey:'background'},
+    subject:{name:'Main subject', exportKey:'subject'},
+    primary:{name:'Primary color', exportKey:'primary'},
+    secondary:{name:'Secondary color', exportKey:'secondary'},
+    surface:{name:'Surface / neutral', exportKey:'surface'},
+    text_foreground:{name:'Text / foreground', exportKey:'text_foreground'},
+    highlight:{name:'Highlight', exportKey:'highlight'},
+    shadow:{name:'Shadow / dark tone', exportKey:'shadow'},
+    accent:{name:'Accent', exportKey:'accent'}
   };
+  const gameRoleKeys=['sky','grass_vegetation','terrain_earth','sunlight_highlight','shadow','water','architecture','accent'];
+  const generalRoleKeys=['background','subject','primary','secondary','surface','text_foreground','highlight','shadow','accent'];
+  const allowedContentTypes=new Set(['game_screenshot','app_ui','photo','illustration','3d_render','webpage','other']);
 
   function nowTime(){ return new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'}); }
   function escapeHtml(s){ return String(s ?? '').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
@@ -35,12 +45,15 @@
   function waitFrame(){ return new Promise(r=>requestAnimationFrame(()=>r())); }
   function clamp(v,min=0,max=1){ return Math.max(min,Math.min(max,Number(v))); }
 
+  // Appearance always follows iOS/system. No saved manual override.
   const systemTheme = matchMedia('(prefers-color-scheme: dark)');
   function syncSystemAppearance(){
     const dark=systemTheme.matches;
     document.documentElement.dataset.appearance=dark?'dark':'light';
-    els.themeIndicator.textContent='◐';
+    els.themeIndicator.textContent=dark?'◐':'◐';
     els.themeIndicator.setAttribute('aria-label',`Appearance follows iOS: ${dark?'dark':'light'} mode`);
+    const fallback=document.querySelector('meta[name="theme-color"]:not([media])');
+    if(fallback) fallback.content=dark?'#08080a':'#f5f5f7';
   }
   syncSystemAppearance();
   systemTheme.addEventListener?.('change',syncSystemAppearance);
@@ -88,10 +101,10 @@
   }
 
   function resetAIState(){
-    state.ai=null;state.refinement=null;state.analysisMode='local';
+    state.ai=null;state.refinement=null;state.analysisMode='local';state.contentType='unknown';state.isGame=null;
     els.aiBadge.textContent='Optional';els.aiBadge.className='status-pill neutral';
     els.aiOutput.textContent='No AI refinement yet. Local palette extraction works without it.';els.aiOutput.className='ai-output empty-state';
-    els.roleMode.textContent='LOCAL';els.roleHint.textContent='Local labels use color + screenshot position heuristics. AI Refinement can remove borders/HUD artifacts and rebuild the palette around the actual game scene.';
+    els.roleMode.textContent='LOCAL';els.roleHint.textContent='Local mode stays content-neutral instead of guessing that every image is a game. AI Refinement can classify the image, remove capture artifacts, and switch to game-specific or general semantic roles.';
   }
 
   function drawSourceCanvas(img){const c=document.createElement('canvas');c.width=img.naturalWidth;c.height=img.naturalHeight;c.getContext('2d',{willReadFrequently:true}).drawImage(img,0,0);return c;}
@@ -109,16 +122,17 @@
 
   async function analyzeLocal(){
     if(!state.image)return;
+    if(state.analysisMode==='ai-refined')resetAIState();
     const k=Number(els.colorCount.value),detail=Number(els.detail.value);
     els.analyzeBtn.disabled=true;els.paletteStatus.textContent='Analyzing';
-    state.analysisMode='local';state.refinement=null;
+    state.analysisMode='local';state.refinement=null;state.contentType='unknown';state.isGame=null;
     try{
       progress(5,'Sampling');log('Sampling screenshot pixels…');await waitFrame();
       const data=sampleImage(state.image,detail);state.rawSamples=data;
       progress(30,'Converting');log(`Collected ${data.length.toLocaleString()} pixel samples.`);await waitFrame();
       const labSamples=toLabSamples(data);progress(43,'Clustering');log(`Running perceptual k-means with ${k} target colors in CIELAB.`);await waitFrame();
-      const clusters=kmeansLab(labSamples,k,11);progress(76,'Classifying');log('Measuring coverage and assigning local scene-role heuristics.');await waitFrame();
-      state.palette=clusters.map((c,i)=>decorateCluster(c,i)).sort((a,b)=>b.coverage-a.coverage);state.localPalette=state.palette.map(c=>({...c}));state.roles=inferRoles(state.palette);
+      const clusters=kmeansLab(labSamples,k,11);progress(76,'Classifying');log('Measuring coverage and assigning content-neutral local roles.');await waitFrame();
+      state.palette=clusters.map((c,i)=>decorateCluster(c,i)).sort((a,b)=>b.coverage-a.coverage);state.localPalette=state.palette.map(c=>({...c}));state.roles=inferGenericRoles(state.palette);
       renderAll();progress(100,'Complete');els.paletteStatus.textContent='Measured';els.roleMode.textContent='LOCAL';
       log(`Finished. ${state.palette.length} perceptual colors extracted.`);
     }catch(err){console.error(err);progress(0,'Error');els.paletteStatus.textContent='Error';log(`Analysis failed: ${err.message||err}`);}finally{els.analyzeBtn.disabled=false;}
@@ -152,7 +166,7 @@
   function decorateCluster(c,index){const hsl=rgbToHsl(c.r,c.g,c.b);return{...c,index,hex:rgbToHex(c.r,c.g,c.b),hsl,label:genericColorLabel(hsl,c.lab[0])};}
   function genericColorLabel(hsl,L){const[h,s,l]=hsl;if(L<19)return'Near black';if(s<9)return l>78?'Highlight':l<30?'Charcoal':'Neutral';if(h>=185&&h<=250)return l>63?'Sky blue':'Blue';if(h>=80&&h<170)return l<30?'Forest green':'Green';if(h>=35&&h<80)return l>68?'Warm light':'Yellow / sand';if(h<35||h>=345)return l>65?'Warm highlight':'Red / earth';if(h>=170&&h<200)return'Teal';if(h>=250&&h<310)return'Violet';return'Accent';}
 
-  function inferRoles(palette){
+  function inferGameRoles(palette){
     const candidates=palette.slice(),used=new Set(),pick=(scoreFn)=>{let best=null,score=-Infinity;for(const c of candidates){if(used.has(c.hex))continue;const s=scoreFn(c);if(s>score){score=s;best=c;}}if(best)used.add(best.hex);return best;};
     const roles=[];
     const sky=pick(c=>{const[h,s,l]=c.hsl;return(c.topRatio*3)+(h>=175&&h<=250?s/45:0)+(l/100)-Math.max(0,c.bottomRatio-.3);});if(sky)roles.push(makeRole('sky',sky,'Local top-region + blue/cyan likelihood','local'));
@@ -165,6 +179,21 @@
     const accent=pick(c=>(c.hsl[1]/35)+(1-c.coverage));if(accent)roles.push(makeRole('accent',accent,'Local high saturation + low coverage','local'));
     return roles;
   }
+  function inferGenericRoles(palette){
+    if(!palette.length)return[];
+    const candidates=palette.slice(),used=new Set();
+    const pick=(scoreFn)=>{let best=null,score=-Infinity;for(const c of candidates){if(used.has(c.hex))continue;const value=scoreFn(c);if(value>score){score=value;best=c;}}if(best)used.add(best.hex);return best;};
+    const roles=[];
+    const background=pick(c=>c.coverage*5+(c.hsl[1]<18?.25:0));if(background)roles.push(makeRole('background',background,'Largest measured color field','local'));
+    const primary=pick(c=>c.coverage*3+c.hsl[1]/90);if(primary)roles.push(makeRole('primary',primary,'Strong coverage + chroma','local'));
+    const secondary=pick(c=>c.coverage*2+c.hsl[1]/130);if(secondary)roles.push(makeRole('secondary',secondary,'Secondary dominant color','local'));
+    const highlight=pick(c=>c.lab[0]/38+c.coverage);if(highlight)roles.push(makeRole('highlight',highlight,'Highest perceptual lightness','local'));
+    const shadow=pick(c=>2.6-c.lab[0]/42+c.coverage*.4);if(shadow)roles.push(makeRole('shadow',shadow,'Lowest perceptual lightness','local'));
+    const accent=pick(c=>c.hsl[1]/34+(1-c.coverage)*.65);if(accent)roles.push(makeRole('accent',accent,'High chroma relative to coverage','local'));
+    const surface=pick(c=>1.8-c.hsl[1]/34+c.coverage*1.2);if(surface)roles.push(makeRole('surface',surface,'Low-saturation structural tone','local'));
+    return roles;
+  }
+
   function makeRole(key,color,reason,source='local',confidence=null){const def=roleDefinitions[key]||{name:key,exportKey:slug(key)};return{key,name:def.name,exportKey:def.exportKey,color,reason,source,confidence};}
 
   function renderAll(){renderPalette();renderRoles();renderExport();}
@@ -183,70 +212,46 @@
 
   function exportObject(){
     return{
-      app:'Chrometry',version:'1.2',mode:state.analysisMode,source:state.file?.name||null,
+      app:'Chrometry',version:'1.3',mode:state.analysisMode,source:state.file?.name||null,
+      content_type:state.contentType,is_game:state.isGame,
       image:state.image?{width:state.image.naturalWidth,height:state.image.naturalHeight}:null,
       palette:state.palette.map((c,i)=>({id:i+1,hex:c.hex,rgb:[c.r,c.g,c.b],hsl:c.hsl.map(v=>Math.round(v*10)/10),coverage:Number((c.coverage*100).toFixed(2)),label:c.label})),
       roles:Object.fromEntries(state.roles.map(r=>[r.exportKey,{hex:r.color.hex,source:r.source,confidence:r.confidence??undefined}])),
       refinement:state.refinement||undefined,
-      ai:state.ai?{game:state.ai.game,confidence:state.ai.confidence,scene:state.ai.scene,visual_style:state.ai.visual_style,lighting:state.ai.lighting,notes:state.ai.notes}:undefined
+      ai:state.ai?{content_type:state.ai.content_type,is_game:state.ai.is_game,content_label:state.ai.content_label,game:state.ai.game,confidence:state.ai.confidence,scene:state.ai.scene,visual_style:state.ai.visual_style,lighting:state.ai.lighting,notes:state.ai.notes}:undefined
     };
   }
   function slug(s){return String(s).toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');}
+  function formatContentType(value){return String(value||'other').replaceAll('_',' ').replace(/\b\w/g,m=>m.toUpperCase());}
   function renderExport(){
     if(!state.palette.length)return;
-    const obj=exportObject();
+    const obj=exportObject(),isGame=state.isGame===true;
     if(state.exportFormat==='json'){
       els.exportCode.textContent=JSON.stringify(obj,null,2);
       return;
     }
     if(state.exportFormat==='css'){
-      els.exportCode.textContent=`/* Chrometry ${state.analysisMode==='ai-refined'?'AI-refined':'local'} game palette */\n:root {\n${state.roles.map(r=>`  --game-${r.exportKey.replaceAll('_','-')}: ${r.color.hex};`).join('\n')}\n\n${state.palette.map((c,i)=>`  --palette-${i+1}: ${c.hex};`).join('\n')}\n}`;
+      const prefix=isGame?'game':'visual';
+      els.exportCode.textContent=`/* Chrometry ${state.analysisMode==='ai-refined'?'AI-refined':'local'} ${isGame?'game':'visual'} palette */\n:root {\n${state.roles.map(r=>`  --${prefix}-${r.exportKey.replaceAll('_','-')}: ${r.color.hex};`).join('\n')}\n\n${state.palette.map((c,i)=>`  --palette-${i+1}: ${c.hex};`).join('\n')}\n}`;
       return;
     }
     const roleLines=state.roles.map(r=>`  ${r.exportKey}: 0x${r.color.hex.slice(1)},`).join('\n');
-    els.exportCode.textContent=`// Chrometry ${state.analysisMode==='ai-refined'?'AI-refined':'local'} palette — Three.js\n// Generated from ${state.file?.name||'screenshot'}\nconst GAME_PALETTE = {\n${roleLines}\n};\n\n// Color-management baseline\nrenderer.outputColorSpace = THREE.SRGBColorSpace;\n\n// Scene environment colors are driven directly by Chrometry roles.\nif (GAME_PALETTE.sky_atmosphere != null) {\n  scene.background = new THREE.Color(GAME_PALETTE.sky_atmosphere);\n}\n\nconst hemi = new THREE.HemisphereLight(\n  GAME_PALETTE.sky_atmosphere ?? 0x87CEEB,\n  GAME_PALETTE.earth_terrain ?? 0x444444,\n  1.35\n);\nscene.add(hemi);\n\nif (GAME_PALETTE.sunlight_highlight != null) {\n  const sun = new THREE.DirectionalLight(GAME_PALETTE.sunlight_highlight, 2.0);\n  sun.position.set(4, 8, 5);\n  scene.add(sun);\n}\n\n// Example material assignment\nconst grassMaterial = new THREE.MeshStandardMaterial({\n  color: GAME_PALETTE.vegetation_grass ?? 0x5F8F45\n});\nconst terrainMaterial = new THREE.MeshStandardMaterial({\n  color: GAME_PALETTE.earth_terrain ?? 0x7A654A\n});`;
+    const dominantLines=state.palette.map(c=>`0x${c.hex.slice(1)}`).join(', ');
+    if(isGame){
+      els.exportCode.textContent=`// Chrometry AI-refined game palette — Three.js\n// Content: ${state.ai?.game||state.ai?.content_label||'game screenshot'}\nconst GAME_PALETTE = {\n${roleLines}\n};\nconst DOMINANT_PALETTE = [${dominantLines}];\n\nrenderer.outputColorSpace = THREE.SRGBColorSpace;\n\nif (GAME_PALETTE.sky_atmosphere != null) {\n  scene.background = new THREE.Color(GAME_PALETTE.sky_atmosphere);\n}\n\nconst hemi = new THREE.HemisphereLight(\n  GAME_PALETTE.sky_atmosphere ?? DOMINANT_PALETTE[0] ?? 0x87CEEB,\n  GAME_PALETTE.earth_terrain ?? GAME_PALETTE.shadow ?? 0x444444,\n  1.35\n);\nscene.add(hemi);\n\nif (GAME_PALETTE.sunlight_highlight != null) {\n  const sun = new THREE.DirectionalLight(GAME_PALETTE.sunlight_highlight, 2.0);\n  sun.position.set(4, 8, 5);\n  scene.add(sun);\n}\n\nconst grassMaterial = new THREE.MeshStandardMaterial({\n  color: GAME_PALETTE.vegetation_grass ?? DOMINANT_PALETTE[1] ?? 0x5F8F45\n});\nconst terrainMaterial = new THREE.MeshStandardMaterial({\n  color: GAME_PALETTE.earth_terrain ?? DOMINANT_PALETTE[2] ?? 0x7A654A\n});`;
+    }else{
+      els.exportCode.textContent=`// Chrometry general visual palette — Three.js\n// Content type: ${formatContentType(state.contentType)}\nconst VISUAL_PALETTE = {\n${roleLines}\n};\nconst DOMINANT_PALETTE = [${dominantLines}];\n\nrenderer.outputColorSpace = THREE.SRGBColorSpace;\n\n// No game-world assumptions are made for non-game imagery.\nconst backgroundColor = VISUAL_PALETTE.background ?? DOMINANT_PALETTE[0] ?? 0x111111;\nscene.background = new THREE.Color(backgroundColor);\n\nconst referenceMaterial = new THREE.MeshStandardMaterial({\n  color: VISUAL_PALETTE.primary ?? VISUAL_PALETTE.subject ?? DOMINANT_PALETTE[1] ?? backgroundColor\n});`;
+    }
   }
   function downloadExport(){if(!state.palette.length)return;const ext=state.exportFormat==='json'?'json':state.exportFormat==='css'?'css':'js',blob=new Blob([els.exportCode.textContent],{type:'text/plain'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`chrometry-${state.analysisMode}-palette.${ext}`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}
 
   async function analyzeWithAI(){
     if(!state.file||!state.palette.length)return;
     if(!window.puter?.ai?.chat){els.aiOutput.textContent='Puter.js did not load. Check your internet connection and try again.';return;}
-    els.aiBtn.disabled=true;els.analyzeBtn.disabled=true;els.aiBadge.textContent='Inspecting';els.aiBadge.className='status-pill';els.aiOutput.className='ai-output';els.aiOutput.textContent='AI is locating the real game scene, checking for borders/HUD contamination, and mapping semantic targets…';
-    log('AI Refinement requested. The screenshot will be sent through Puter for scene understanding.');progress(8,'AI vision');
+    els.aiBtn.disabled=true;els.analyzeBtn.disabled=true;els.aiBadge.textContent='Inspecting';els.aiBadge.className='status-pill';els.aiOutput.className='ai-output';els.aiOutput.textContent='AI is identifying what this image actually is, locating the intended content, and building the right semantic palette…';
+    log('AI Refinement requested. The image will be sent through Puter for content-aware palette refinement.');progress(8,'AI vision');
     const paletteText=state.palette.map((c,i)=>`${i+1}. ${c.hex} (${(c.coverage*100).toFixed(1)}%)`).join(', ');
-    const prompt=`You are the semantic vision/refinement engine for Chrometry, a game colorimetry tool. Inspect the attached screenshot carefully. The local CIELAB engine measured: ${paletteText}.
-
-Your job is NOT merely to describe the image. You must tell Chrometry which pixels belong to the actual game-world palette and which areas should be ignored before reclustering.
-
-Rules:
-1. Identify the actual gameplay/content frame. Black letterbox bars, device/browser borders, accidental screenshot edges, gallery chrome, menus outside the game frame, and obvious capture artifacts are NOT game-world colors.
-2. HUD/minimap/subtitle/menu overlays may be visually part of the game but should usually be excluded from the ENVIRONMENT palette unless they are the intended target. Mark them as exclude_regions when they materially contaminate colors.
-3. Never remove a dark/black color merely because it is black if it is a real shadow, night sky, object, road, clothing, or world material.
-4. Use normalized coordinates 0..1 relative to the full screenshot. Be conservative: if unsure, do not exclude the region.
-5. For semantic role colors, sample/estimate actual visible scene colors. A role may be absent; do not invent water, grass, etc.
-6. Return ONLY strict JSON. No markdown.
-
-Schema:
-{
-  "game":"name or Unknown",
-  "confidence":0-100,
-  "scene":"short description",
-  "visual_style":"short description",
-  "lighting":"short description",
-  "content_region":{"x":0,"y":0,"w":1,"h":1,"confidence":0-100,"reason":"why"},
-  "exclude_regions":[{"x":0,"y":0,"w":0,"h":0,"confidence":0-100,"reason":"black border | HUD | menu | capture artifact | other"}],
-  "roles":{
-    "sky":{"present":true,"hex":"#RRGGBB","confidence":0-100,"reason":""},
-    "grass_vegetation":{"present":true,"hex":"#RRGGBB","confidence":0-100,"reason":""},
-    "terrain_earth":{"present":true,"hex":"#RRGGBB","confidence":0-100,"reason":""},
-    "sunlight_highlight":{"present":true,"hex":"#RRGGBB","confidence":0-100,"reason":""},
-    "shadow":{"present":true,"hex":"#RRGGBB","confidence":0-100,"reason":""},
-    "water":{"present":false,"hex":null,"confidence":0-100,"reason":""},
-    "architecture":{"present":true,"hex":"#RRGGBB","confidence":0-100,"reason":""},
-    "accent":{"present":true,"hex":"#RRGGBB","confidence":0-100,"reason":""}
-  },
-  "notes":["3-5 concise palette recreation notes"]
-}`;
+    const prompt=`You are the semantic vision/refinement engine for Chrometry, a colorimetry tool optimized for game screenshots but also designed to handle app UI, photos, illustrations, 3D renders, webpages, and other images. Inspect the attached image carefully. The local CIELAB engine measured: ${paletteText}.\n\nYour first job is to CLASSIFY THE CONTENT. Do not assume it is a game. Then tell Chrometry which pixels belong to the intended content and which are accidental capture artifacts before reclustering.\n\nRules:\n1. content_type must be one of: game_screenshot, app_ui, photo, illustration, 3d_render, webpage, other. Set is_game=true ONLY when the image clearly depicts a video game or game capture.\n2. Identify the intended content frame. Device/browser borders, accidental screenshot edges, gallery chrome, letterboxing outside the intended content, and obvious capture artifacts may be excluded.\n3. If content_type is app_ui or webpage, the interface itself IS the intended content. Do not remove buttons, panels, text, or chrome that belong to the app/page being analyzed.\n4. If content_type is photo, illustration, or 3d_render, keep the actual artwork/image content. Only remove accidental capture chrome or borders.\n5. If content_type is game_screenshot, HUD/minimap/subtitle/menu overlays may be excluded from the ENVIRONMENT palette when they materially contaminate world colors, but do not remove them merely because they are UI.\n6. Never remove dark/black pixels simply because they are black. They may be real shadows, night sky, clothing, roads, UI, or intended background.\n7. Use normalized coordinates 0..1 relative to the full image. Be conservative: if unsure, do not exclude a region.\n8. Semantic colors must come from colors visibly present in the image. Do not invent absent objects or roles.\n9. For GAME screenshots, use only the game roles below. For NON-GAME images, set game-only roles absent and use the general roles instead. A portrait photo must not suddenly get labeled as game sky/terrain just because blue or brown colors exist.\n10. Return ONLY strict JSON. No markdown.\n\nSchema:\n{\n  \"content_type\":\"game_screenshot | app_ui | photo | illustration | 3d_render | webpage | other\",\n  \"is_game\":true,\n  \"content_label\":\"short human description such as GTA V gameplay, portrait photo, settings screen, poster artwork\",\n  \"game\":\"specific game name or Unknown; use Unknown for non-game content\",\n  \"confidence\":0-100,\n  \"scene\":\"short description\",\n  \"visual_style\":\"short description\",\n  \"lighting\":\"short description when meaningful\",\n  \"content_region\":{\"x\":0,\"y\":0,\"w\":1,\"h\":1,\"confidence\":0-100,\"reason\":\"why\"},\n  \"exclude_regions\":[{\"x\":0,\"y\":0,\"w\":0,\"h\":0,\"confidence\":0-100,\"reason\":\"capture border | letterbox | HUD contamination | gallery chrome | other\"}],\n  \"roles\":{\n    \"sky\":{\"present\":false,\"hex\":null,\"confidence\":0-100,\"reason\":\"game only\"},\n    \"grass_vegetation\":{\"present\":false,\"hex\":null,\"confidence\":0-100,\"reason\":\"game only\"},\n    \"terrain_earth\":{\"present\":false,\"hex\":null,\"confidence\":0-100,\"reason\":\"game only\"},\n    \"sunlight_highlight\":{\"present\":false,\"hex\":null,\"confidence\":0-100,\"reason\":\"game only\"},\n    \"water\":{\"present\":false,\"hex\":null,\"confidence\":0-100,\"reason\":\"game only\"},\n    \"architecture\":{\"present\":false,\"hex\":null,\"confidence\":0-100,\"reason\":\"game only\"},\n    \"background\":{\"present\":false,\"hex\":null,\"confidence\":0-100,\"reason\":\"non-game general role\"},\n    \"subject\":{\"present\":false,\"hex\":null,\"confidence\":0-100,\"reason\":\"non-game general role\"},\n    \"primary\":{\"present\":false,\"hex\":null,\"confidence\":0-100,\"reason\":\"non-game general role\"},\n    \"secondary\":{\"present\":false,\"hex\":null,\"confidence\":0-100,\"reason\":\"non-game general role\"},\n    \"surface\":{\"present\":false,\"hex\":null,\"confidence\":0-100,\"reason\":\"non-game UI/artwork role\"},\n    \"text_foreground\":{\"present\":false,\"hex\":null,\"confidence\":0-100,\"reason\":\"non-game UI role\"},\n    \"highlight\":{\"present\":false,\"hex\":null,\"confidence\":0-100,\"reason\":\"general role\"},\n    \"shadow\":{\"present\":true,\"hex\":\"#RRGGBB\",\"confidence\":0-100,\"reason\":\"general or game role\"},\n    \"accent\":{\"present\":true,\"hex\":\"#RRGGBB\",\"confidence\":0-100,\"reason\":\"general or game role\"}\n  },\n  \"notes\":[\"3-5 concise palette recreation notes\"]\n}`;
 
     try{
       const result=await puter.ai.chat(prompt,state.file,false);
@@ -254,9 +259,13 @@ Schema:
       const obj=parseAIObject(extractAIText(result));state.ai=normalizeAIPlan(obj);
       await applyAIRefinement(state.ai);
       renderAI(state.ai);renderAll();
-      els.aiBadge.textContent='Applied';els.paletteStatus.textContent='AI refined';els.roleMode.textContent='AI REFINED';
-      els.roleHint.textContent='AI-guided regions were applied to the pixel sample, the CIELAB palette was rebuilt, and semantic roles now drive the generated export.';
-      progress(100,'AI refined');log(`AI refinement applied${state.ai.game?`: ${state.ai.game}`:''}. Export regenerated from refined colors.`);
+      els.aiBadge.textContent='Applied';els.paletteStatus.textContent='AI refined';
+      els.roleMode.textContent=state.ai.is_game?'AI · GAME':`AI · ${formatContentType(state.ai.content_type).toUpperCase()}`;
+      els.roleHint.textContent=state.ai.is_game
+        ?'AI classified this as a game screenshot. Game-world semantic colors now drive the generated export.'
+        :`AI classified this as ${formatContentType(state.ai.content_type).toLowerCase()}, not a game screenshot. Game-only labels were removed and the export now uses general visual roles.`;
+      progress(100,'AI refined');
+      log(`AI refinement applied: ${state.ai.content_label||formatContentType(state.ai.content_type)}. Export regenerated from content-aware colors.`);
     }catch(err){
       console.error(err);els.aiBadge.textContent='Unavailable';els.aiBadge.className='status-pill neutral';els.aiOutput.textContent=`AI refinement could not complete: ${err.message||err}\n\nThe local Chrometry palette is still usable and has not been overwritten.`;progress(0,'AI error');log(`AI refinement unavailable: ${err.message||err}`);
     }finally{els.aiBtn.disabled=false;els.analyzeBtn.disabled=false;}
@@ -276,14 +285,24 @@ Schema:
     return{x,y,w:cw,h:ch,confidence,reason:String(r.reason||'AI region')};
   }
   function normalizeAIPlan(o){
-    const plan={...o};plan.confidence=clamp(Number(o?.confidence)||0,0,100);plan.content_region=normalizeRegion(o?.content_region)||{x:0,y:0,w:1,h:1,confidence:0,reason:'Full screenshot'};
+    const plan={...o};
+    const rawType=String(o?.content_type||'other').trim().toLowerCase().replace(/[\s-]+/g,'_');
+    const type=allowedContentTypes.has(rawType)?rawType:'other';
+    plan.content_type=type;
+    plan.is_game=o?.is_game===true||type==='game_screenshot';
+    plan.content_label=String(o?.content_label||o?.game||(plan.is_game?'Game screenshot':formatContentType(type)));
+    plan.game=plan.is_game?String(o?.game||'Unknown'):'Unknown';
+    plan.confidence=clamp(Number(o?.confidence)||0,0,100);
+    plan.content_region=normalizeRegion(o?.content_region)||{x:0,y:0,w:1,h:1,confidence:0,reason:'Full image'};
     plan.exclude_regions=(Array.isArray(o?.exclude_regions)?o.exclude_regions:[]).map(normalizeRegion).filter(Boolean).filter(r=>r.confidence>=.55).slice(0,12);
     plan.roles={};
     for(const key of Object.keys(roleDefinitions)){
-      const r=o?.roles?.[key];if(!r||typeof r!=='object'){plan.roles[key]={present:null,hex:null,confidence:0,reason:'Not classified'};continue;}
+      const r=o?.roles?.[key];
+      if(!r||typeof r!=='object'){plan.roles[key]={present:null,hex:null,confidence:0,reason:'Not classified'};continue;}
       plan.roles[key]={present:r.present===false?false:r.present===true?true:null,hex:isHex(r.hex)?String(r.hex).toUpperCase():null,confidence:clamp(Number(r.confidence)||0,0,100),reason:String(r.reason||'AI semantic match')};
     }
-    plan.notes=Array.isArray(o?.notes)?o.notes.map(String).slice(0,6):[];return plan;
+    plan.notes=Array.isArray(o?.notes)?o.notes.map(String).slice(0,6):[];
+    return plan;
   }
   function isHex(v){return typeof v==='string'&&/^#[0-9a-f]{6}$/i.test(v.trim());}
   function inRegion(p,r){return p.x>=r.x&&p.x<=r.x+r.w&&p.y>=r.y&&p.y<=r.y+r.h;}
@@ -298,6 +317,7 @@ Schema:
     if(plan.exclude_regions.length)accepted=accepted.filter(p=>!plan.exclude_regions.some(r=>inRegion(p,r)));
 
     const ratio=accepted.length/Math.max(1,raw.length);
+    // Guardrail against an over-aggressive or mistaken AI mask.
     if(accepted.length<900||ratio<.18){
       accepted=raw.slice();
       plan._maskRejected=true;
@@ -308,7 +328,7 @@ Schema:
     const k=Number(els.colorCount.value),lab=toLabSamples(accepted),clusters=kmeansLab(lab,k,12);
     state.palette=clusters.map((c,i)=>decorateCluster(c,i)).sort((a,b)=>b.coverage-a.coverage);
     state.roles=rolesFromAI(plan,state.palette);
-    state.analysisMode='ai-refined';
+    state.analysisMode='ai-refined';state.contentType=plan.content_type;state.isGame=plan.is_game;
     state.refinement={
       acceptedPixelPercent:Number((accepted.length/raw.length*100).toFixed(2)),
       contentRegion:useContent?content:null,
@@ -319,17 +339,22 @@ Schema:
   }
 
   function rolesFromAI(plan,palette){
-    const out=[],localFallback=inferRoles(palette),fallbackByKey=Object.fromEntries(localFallback.map(r=>[r.key,r]));
-    for(const key of Object.keys(roleDefinitions)){
+    const out=[];
+    const localFallback=plan.is_game?inferGameRoles(palette):inferGenericRoles(palette);
+    const fallbackByKey=Object.fromEntries(localFallback.map(r=>[r.key,r]));
+    const activeKeys=plan.is_game?gameRoleKeys:generalRoleKeys;
+    for(const key of activeKeys){
       const target=plan.roles?.[key];
       if(target?.present===false)continue;
       if(target?.hex&&target.confidence>=45){
-        const color=nearestPaletteColor(target.hex,palette);if(color){out.push(makeRole(key,color,target.reason||'AI semantic color target','ai',target.confidence));continue;}
+        const color=nearestPaletteColor(target.hex,palette);
+        if(color){out.push(makeRole(key,color,target.reason||'AI semantic color target','ai',target.confidence));continue;}
       }
-      if(target?.present===true&&fallbackByKey[key]){const f=fallbackByKey[key];out.push(makeRole(key,f.color,'AI confirmed role; nearest local semantic fallback','ai',target.confidence||null));continue;}
-      if(target?.present==null&&fallbackByKey[key])out.push(fallbackByKey[key]);
+      if(target?.present===true&&fallbackByKey[key]){
+        const f=fallbackByKey[key];out.push(makeRole(key,f.color,'AI confirmed role; nearest local fallback','ai',target.confidence||null));continue;
+      }
     }
-    return out;
+    return out.length?out:inferGenericRoles(palette);
   }
   function nearestPaletteColor(hex,palette){
     const rgb=hexToRgb(hex);if(!rgb)return null;const lab=rgbToLab(rgb.r,rgb.g,rgb.b);let best=null,dist=Infinity;
@@ -338,18 +363,14 @@ Schema:
   function hexToRgb(hex){const m=/^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(String(hex));return m?{r:parseInt(m[1],16),g:parseInt(m[2],16),b:parseInt(m[3],16)}:null;}
 
   function renderAI(o){
-    const activeRegions=o.exclude_regions?.length||0,roleEntries=Object.entries(o.roles||{}).filter(([,r])=>r?.present!==false&&r?.hex);
+    const activeRegions=o.exclude_regions?.length||0;
+    const activeKeys=o.is_game?gameRoleKeys:generalRoleKeys;
+    const roleEntries=activeKeys.map(k=>[k,o.roles?.[k]]).filter(([,r])=>r?.present!==false&&r?.hex);
     const refined=state.refinement;
+    const title=o.is_game?(o.game&&o.game!=='Unknown'?o.game:'Game screenshot'):(o.content_label||formatContentType(o.content_type));
+    const typeLabel=o.is_game?'Game screenshot':formatContentType(o.content_type);
     els.aiOutput.className='ai-output';
-    els.aiOutput.innerHTML=`<div class="ai-grid">
-      <div class="ai-card"><b>${escapeHtml(o.game||'Unknown game')}${o.confidence!=null?` · ${Math.round(o.confidence)}% confidence`:''}</b><span>${escapeHtml(o.scene||'Scene analyzed')}</span><div class="ai-badge-row"><span class="mini-badge">${refined?.acceptedPixelPercent??100}% pixels kept</span><span class="mini-badge">${activeRegions} region${activeRegions===1?'':'s'} ignored</span><span class="mini-badge">export rebuilt</span></div></div>
-      ${o.visual_style?`<div class="ai-card"><b>Visual style</b><span>${escapeHtml(o.visual_style)}</span></div>`:''}
-      ${o.lighting?`<div class="ai-card"><b>Lighting</b><span>${escapeHtml(o.lighting)}</span></div>`:''}
-      ${activeRegions?`<div class="ai-card"><b>Ignored screenshot areas</b><span>${o.exclude_regions.map(r=>`${escapeHtml(r.reason)} · ${Math.round(r.confidence*100)}%`).join('<br>')}</span></div>`:''}
-      ${roleEntries.length?`<div class="ai-card"><b>Semantic targets used</b><span>${roleEntries.map(([k,r])=>`${escapeHtml(roleDefinitions[k]?.name||k)}: ${escapeHtml(r.hex)} · ${Math.round(r.confidence)}%`).join('<br>')}</span></div>`:''}
-      ${o.notes?.length?`<div class="ai-card"><b>Recreation notes</b><span>${o.notes.map(n=>`• ${escapeHtml(n)}`).join('<br>')}</span></div>`:''}
-      ${o._maskRejected?`<div class="ai-card"><b>Safety guardrail</b><span>The proposed crop removed too much of the image, so Chrometry rejected that mask instead of damaging the palette.</span></div>`:''}
-    </div>`;
+    els.aiOutput.innerHTML=`<div class="ai-grid">\n      <div class="ai-card"><b>${escapeHtml(title)}${o.confidence!=null?` · ${Math.round(o.confidence)}% confidence`:''}</b><span>${escapeHtml(o.scene||'Image analyzed')}</span><div class="ai-badge-row"><span class="mini-badge">${escapeHtml(typeLabel)}</span><span class="mini-badge">${o.is_game?'game':'not a game'}</span><span class="mini-badge">${refined?.acceptedPixelPercent??100}% pixels kept</span><span class="mini-badge">${activeRegions} region${activeRegions===1?'':'s'} ignored</span><span class="mini-badge">export rebuilt</span></div></div>\n      ${o.visual_style?`<div class="ai-card"><b>Visual style</b><span>${escapeHtml(o.visual_style)}</span></div>`:''}\n      ${o.lighting?`<div class="ai-card"><b>Lighting</b><span>${escapeHtml(o.lighting)}</span></div>`:''}\n      ${activeRegions?`<div class="ai-card"><b>Ignored capture areas</b><span>${o.exclude_regions.map(r=>`${escapeHtml(r.reason)} · ${Math.round(r.confidence*100)}%`).join('<br>')}</span></div>`:''}\n      ${roleEntries.length?`<div class="ai-card"><b>Semantic targets used</b><span>${roleEntries.map(([k,r])=>`${escapeHtml(roleDefinitions[k]?.name||k)}: ${escapeHtml(r.hex)} · ${Math.round(r.confidence)}%`).join('<br>')}</span></div>`:''}\n      ${o.notes?.length?`<div class="ai-card"><b>Palette notes</b><span>${o.notes.map(n=>`• ${escapeHtml(n)}`).join('<br>')}</span></div>`:''}\n      ${o._maskRejected?`<div class="ai-card"><b>Safety guardrail</b><span>The proposed crop removed too much of the image, so Chrometry rejected that mask instead of damaging the palette.</span></div>`:''}\n    </div>`;
   }
 
   function rgbToHex(r,g,b){return'#'+[r,g,b].map(v=>Math.round(v).toString(16).padStart(2,'0')).join('').toUpperCase();}
