@@ -1,4 +1,4 @@
-const CACHE='chrometry-final-v1-4';
+const CACHE='chrometry-final-v1-4-1';
 const CORE=[
   './','./index.html','./styles.css','./ios-polish.css','./app.js','./ui-polish.js','./manifest.webmanifest','./chrometry-icon.svg','./chrometry-home-icon.svg','./chrometry-favicon.svg',
   './apple-touch-icon-v7.png','./icon-192-v7.png','./icon-512-v7.png'
