@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#24262C"/>
+      <stop offset="0.55" stop-color="#111216"/>
+      <stop offset="1" stop-color="#050506"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.34" r="0.74">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.085"/>
+      <stop offset="0.44" stop-color="#738CFF" stop-opacity="0.045"/>
+      <stop offset="1" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="blue" x1="0.1" y1="0" x2="0.9" y2="1">
+      <stop offset="0" stop-color="#8FC5FF"/>
+      <stop offset="0.25" stop-color="#68A9FF"/>
+      <stop offset="0.72" stop-color="#4E90F4"/>
+      <stop offset="1" stop-color="#3C78D9"/>
+    </linearGradient>
+    <linearGradient id="green" x1="0.1" y1="0" x2="0.9" y2="1">
+      <stop offset="0" stop-color="#93EDB1"/>
+      <stop offset="0.25" stop-color="#70DB91"/>
+      <stop offset="0.72" stop-color="#55C975"/>
+      <stop offset="1" stop-color="#3DA75D"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0.1" y1="0" x2="0.9" y2="1">
+      <stop offset="0" stop-color="#FFE495"/>
+      <stop offset="0.25" stop-color="#FFD46D"/>
+      <stop offset="0.72" stop-color="#F6BE49"/>
+      <stop offset="1" stop-color="#D89B27"/>
+    </linearGradient>
+    <linearGradient id="spec" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.72"/>
+      <stop offset="0.13" stop-color="#FFFFFF" stop-opacity="0.18"/>
+      <stop offset="0.55" stop-color="#FFFFFF" stop-opacity="0"/>
+      <stop offset="0.88" stop-color="#FFFFFF" stop-opacity="0.04"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0.28"/>
+    </linearGradient>
+    <filter id="shadow" x="-60%" y="-30%" width="220%" height="180%">
+      <feDropShadow dx="0" dy="26" stdDeviation="24" flood-color="#000000" flood-opacity="0.34"/>
+      <feDropShadow dx="-7" dy="-8" stdDeviation="13" flood-color="#FFFFFF" flood-opacity="0.055"/>
+    </filter>
+    <filter id="softGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="24"/>
+    </filter>
+    <clipPath id="barClip1"><rect x="222" y="198" width="160" height="628" rx="80"/></clipPath>
+    <clipPath id="barClip2"><rect x="432" y="174" width="160" height="676" rx="80"/></clipPath>
+    <clipPath id="barClip3"><rect x="642" y="198" width="160" height="628" rx="80"/></clipPath>
+  </defs>
+
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+  <rect width="1024" height="1024" fill="url(#glow)"/>
+
+  <ellipse cx="302" cy="540" rx="112" ry="300" fill="#5196FF" opacity="0.10" filter="url(#softGlow)"/>
+  <ellipse cx="512" cy="510" rx="112" ry="324" fill="#58D27B" opacity="0.09" filter="url(#softGlow)"/>
+  <ellipse cx="722" cy="540" rx="112" ry="300" fill="#FFC850" opacity="0.09" filter="url(#softGlow)"/>
+
+  <g filter="url(#shadow)">
+    <rect x="222" y="198" width="160" height="628" rx="80" fill="url(#blue)" fill-opacity="0.96"/>
+    <rect x="432" y="174" width="160" height="676" rx="80" fill="url(#green)" fill-opacity="0.96"/>
+    <rect x="642" y="198" width="160" height="628" rx="80" fill="url(#gold)" fill-opacity="0.96"/>
+  </g>
+
+  <g opacity="0.74">
+    <rect x="222.8" y="198.8" width="158.4" height="626.4" rx="79.2" fill="none" stroke="#FFFFFF" stroke-opacity="0.36" stroke-width="2.6"/>
+    <rect x="432.8" y="174.8" width="158.4" height="674.4" rx="79.2" fill="none" stroke="#FFFFFF" stroke-opacity="0.36" stroke-width="2.6"/>
+    <rect x="642.8" y="198.8" width="158.4" height="626.4" rx="79.2" fill="none" stroke="#FFFFFF" stroke-opacity="0.36" stroke-width="2.6"/>
+  </g>
+
+  <g opacity="0.42">
+    <rect x="239" y="216" width="126" height="592" rx="63" fill="url(#spec)" clip-path="url(#barClip1)"/>
+    <rect x="449" y="192" width="126" height="640" rx="63" fill="url(#spec)" clip-path="url(#barClip2)"/>
+    <rect x="659" y="216" width="126" height="592" rx="63" fill="url(#spec)" clip-path="url(#barClip3)"/>
+  </g>
+
+  <g fill="#FFFFFF" opacity="0.16">
+    <rect x="244" y="246" width="12" height="496" rx="6"/>
+    <rect x="454" y="222" width="12" height="544" rx="6"/>
+    <rect x="664" y="246" width="12" height="496" rx="6"/>
+  </g>
+</svg>
