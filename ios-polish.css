@@ -2,16 +2,52 @@
   --header-edge:rgba(0,0,0,.10);
   --header-shadow:0 10px 28px rgba(20,20,30,.06);
   --control-edge:rgba(0,0,0,.10);
+  --glass-top:rgba(255,255,255,.72);
+  --glass-bottom:rgba(255,255,255,.30);
+  --glass-fill:rgba(244,244,248,.74);
 }
 @media(prefers-color-scheme:dark){
   :root{
     --header-edge:rgba(255,255,255,.22);
     --header-shadow:0 10px 28px rgba(0,0,0,.18);
     --control-edge:rgba(255,255,255,.17);
+    --glass-top:rgba(255,255,255,.50);
+    --glass-bottom:rgba(255,255,255,.16);
+    --glass-fill:rgba(46,46,52,.78);
   }
 }
 
-/* One canonical mark everywhere: header, favicon, PWA and Home Screen. */
+/* Manual appearance overrides. Initial load still follows iOS until the user taps. */
+html[data-appearance="light"]{
+  --bg:#f5f5f7;--surface:rgba(255,255,255,.72);--surface-solid:#fff;--content-surface:rgba(255,255,255,.88);--ink:#101012;--muted:#72727c;
+  --line:rgba(0,0,0,.075);--soft:#eeeef3;--blue:#286cff;--blue-soft:rgba(40,108,255,.1);--green:#13814b;
+  --control-glass:rgba(245,245,250,.68);--control-strong:#121216;--shadow:0 18px 55px rgba(20,20,30,.07);--code:#111116;--code-ink:#ececf2;
+  --header-edge:rgba(0,0,0,.10);--header-shadow:0 10px 28px rgba(20,20,30,.06);--control-edge:rgba(0,0,0,.10);
+  --glass-top:rgba(255,255,255,.72);--glass-bottom:rgba(255,255,255,.30);--glass-fill:rgba(244,244,248,.74);color-scheme:light;
+}
+html[data-appearance="dark"]{
+  --bg:#08080a;--surface:rgba(28,28,33,.66);--surface-solid:#1b1b1f;--content-surface:rgba(27,27,31,.9);--ink:#f5f5f7;--muted:#a0a0aa;
+  --line:rgba(255,255,255,.09);--soft:#28282e;--blue:#7aa0ff;--blue-soft:rgba(122,160,255,.13);--green:#67d79a;
+  --control-glass:rgba(48,48,55,.6);--control-strong:#f4f4f7;--shadow:0 18px 60px rgba(0,0,0,.28);--code:#0f0f13;--code-ink:#f0f0f5;
+  --header-edge:rgba(255,255,255,.22);--header-shadow:0 10px 28px rgba(0,0,0,.18);--control-edge:rgba(255,255,255,.17);
+  --glass-top:rgba(255,255,255,.50);--glass-bottom:rgba(255,255,255,.16);--glass-fill:rgba(46,46,52,.78);color-scheme:dark;
+}
+
+/* Smooth iOS-like appearance change without animating layout. */
+html.theme-switching body,
+html.theme-switching .topbar,
+html.theme-switching .card,
+html.theme-switching .dropzone,
+html.theme-switching .appearance-indicator,
+html.theme-switching #aiBtn,
+html.theme-switching #copyBtn,
+html.theme-switching .quiet-btn,
+html.theme-switching .export-tab,
+html.theme-switching pre{
+  transition:background-color .32s cubic-bezier(.2,.8,.2,1),color .32s cubic-bezier(.2,.8,.2,1),box-shadow .32s cubic-bezier(.2,.8,.2,1),border-color .32s cubic-bezier(.2,.8,.2,1)!important;
+}
+
+/* One canonical mark everywhere: header, PWA and Home Screen. */
 .brand-mark{
   padding:0;
   overflow:hidden;
@@ -20,43 +56,81 @@
 }
 .brand-mark i{display:none!important}
 
-/* Keep the header calm while giving the full perimeter an even iOS-style
-   separation. No top/bottom highlight overlay, so scrolling stays quiet. */
+/* Keep the header calm. No moving/specular overlay on the header itself. */
 .topbar{
   border:0;
   box-shadow:inset 0 0 0 1px var(--header-edge),var(--header-shadow);
 }
 .topbar::before{display:none!important}
-
-@media(prefers-color-scheme:dark){
-  .topbar.glass{
-    background:rgba(31,31,36,.78);
-    backdrop-filter:blur(30px) saturate(1.28);
-    -webkit-backdrop-filter:blur(30px) saturate(1.28);
-    box-shadow:
-      inset 0 0 0 1px rgba(255,255,255,.22),
-      0 0 0 .5px rgba(255,255,255,.035),
-      0 10px 28px rgba(0,0,0,.18);
-  }
+html[data-appearance="dark"] .topbar.glass{
+  background:rgba(31,31,36,.78);
+  backdrop-filter:blur(30px) saturate(1.28);
+  -webkit-backdrop-filter:blur(30px) saturate(1.28);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.22),0 0 0 .5px rgba(255,255,255,.035),0 10px 28px rgba(0,0,0,.18);
+}
+html[data-appearance="light"] .topbar.glass{
+  background:rgba(250,250,252,.78);
+  backdrop-filter:blur(30px) saturate(1.22);
+  -webkit-backdrop-filter:blur(30px) saturate(1.22);
 }
 
-/* A true circular system-appearance control, matching iOS toolbar controls. */
+/* Apple-like glass is reserved for interactive controls. */
+.appearance-indicator,#aiBtn,#copyBtn{
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+  background:var(--glass-fill)!important;
+  border:0!important;
+  box-shadow:inset 0 0 0 1px var(--control-edge),0 5px 16px rgba(0,0,0,.09)!important;
+}
+.appearance-indicator::before,.appearance-indicator::after,
+#aiBtn::before,#aiBtn::after,#copyBtn::before,#copyBtn::after{
+  content:"";
+  position:absolute;
+  left:10%;right:10%;height:1px;
+  pointer-events:none;
+  z-index:2;
+}
+.appearance-indicator::before,#aiBtn::before,#copyBtn::before{
+  top:1px;
+  background:linear-gradient(90deg,transparent,var(--glass-top) 24%,var(--glass-top) 76%,transparent);
+  box-shadow:0 1px 7px rgba(255,255,255,.12);
+}
+.appearance-indicator::after,#aiBtn::after,#copyBtn::after{
+  bottom:1px;
+  background:linear-gradient(90deg,transparent,var(--glass-bottom) 24%,var(--glass-bottom) 76%,transparent);
+}
 .appearance-indicator{
-  width:44px;
-  height:44px;
-  aspect-ratio:1;
-  flex:0 0 44px;
-  border-radius:50%!important;
-  border:0;
-  box-shadow:
-    inset 0 0 0 1px var(--control-edge),
-    0 4px 12px rgba(0,0,0,.06);
+  width:44px;height:44px;aspect-ratio:1;flex:0 0 44px;border-radius:50%!important;padding:0;display:grid;place-items:center;
+  touch-action:manipulation;
 }
-@media(prefers-color-scheme:dark){
-  .appearance-indicator{
-    background:rgba(46,46,52,.78);
-    box-shadow:
-      inset 0 0 0 1px rgba(255,255,255,.17),
-      0 4px 14px rgba(0,0,0,.14);
-  }
+.appearance-indicator svg{width:21px;height:21px;display:block;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+#aiBtn,#copyBtn{border-radius:999px!important}
+#copyBtn{min-width:76px}
+
+/* Remove the label activation flash on the image picker. */
+.dropzone{outline:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.dropzone:focus,.dropzone:focus-visible{outline:0}
+.dropzone:active{transform:none!important;filter:none!important}
+#openImageBtn{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+
+/* The preview may wrap visually, but copied/downloaded text stays untouched. */
+.workspace-grid,.workspace-grid>*,.workspace-grid aside,.card,.export-tabs,.export-actions{min-width:0}
+#exportCode{
+  width:100%;max-width:100%;min-width:0;
+  white-space:pre-wrap;
+  overflow-wrap:anywhere;
+  word-break:break-word;
+  overflow-x:hidden;
+  -webkit-user-select:none!important;user-select:none!important;-webkit-touch-callout:none!important;
+}
+.export-actions{flex-wrap:wrap}
+
+/* Prevent iOS long-press selection/magnifier across the app shell. */
+.app-shell,.app-shell *:not(input[type="range"]){-webkit-user-select:none!important;user-select:none!important;-webkit-touch-callout:none!important}
+button,.dropzone,.brand,.export-tab{touch-action:manipulation}
+
+@media(max-width:430px){
+  #exportCode{font-size:8.5px;line-height:1.5}
+  .export-actions .quiet-btn{max-width:100%}
 }
