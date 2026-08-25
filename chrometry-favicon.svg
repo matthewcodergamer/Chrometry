@@ -5,8 +5,9 @@
     <linearGradient id="green" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#93EDB1"/><stop offset="1" stop-color="#55C975"/></linearGradient>
     <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFE495"/><stop offset="1" stop-color="#F6BE49"/></linearGradient>
   </defs>
-  <rect x="26" y="26" width="972" height="972" rx="226" fill="url(#bg)" stroke="#000" stroke-opacity=".06" stroke-width="10"/>
-  <rect x="163" y="210" width="171" height="604" rx="86" fill="url(#blue)"/>
-  <rect x="427" y="163" width="171" height="698" rx="86" fill="url(#green)"/>
-  <rect x="691" y="210" width="171" height="604" rx="86" fill="url(#gold)"/>
+  <rect x="26" y="26" width="972" height="972" rx="226" fill="url(#bg)" stroke="#000" stroke-opacity=".05" stroke-width="10"/>
+  <!-- Deliberately amplified height differences so the stagger survives Safari's tiny favicon rendering. -->
+  <rect x="158" y="232" width="176" height="560" rx="88" fill="url(#blue)"/>
+  <rect x="424" y="146" width="176" height="724" rx="88" fill="url(#green)"/>
+  <rect x="690" y="205" width="176" height="614" rx="88" fill="url(#gold)"/>
 </svg>
