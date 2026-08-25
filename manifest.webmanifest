@@ -1,16 +1,24 @@
 {
-  "id": "./",
   "name": "Chrometry — Game Palette Analyzer",
   "short_name": "Chrometry",
-  "description": "Extract perceptual palettes and scene colors from game screenshots.",
+  "description": "Extract and AI-refine perceptual game palettes from screenshots.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "display_override": ["standalone", "minimal-ui"],
   "orientation": "any",
   "background_color": "#f5f5f7",
   "theme_color": "#f5f5f7",
   "icons": [
-    {"src":"./icon-v2.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}
+    {
+      "src": "./icon-v2.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "id": "./",
+  "display_override": [
+    "standalone",
+    "minimal-ui"
   ]
 }
