@@ -130,17 +130,32 @@
     });
   }
 
-  // Measured-color locator: tapping a swatch or palette segment finds a representative
-  // pixel of that perceptual color in the screenshot, scrolls the source into view,
-  // and marks the location with a small iOS-red pointer and ring.
+  // Persistent color locator. Direct image taps stay exactly where tapped and every
+  // subsequent tap moves the same circle. Palette and Color Roles selections find a
+  // representative matching pixel in CIELAB and move that same circle to the image.
   const canvasStage = document.getElementById('canvasStage');
   const previewCanvas = document.getElementById('previewCanvas');
+  const roleGrid = document.getElementById('roleGrid');
   let locator = null;
-  let locatorTimer = null;
+  let activePointerId = null;
+
+  const interactionStyle = document.createElement('style');
+  interactionStyle.textContent = `
+    #roleGrid .role-card{cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+    #roleGrid .role-card:active{transform:scale(.992)}
+    #roleGrid .role-card.color-located{outline:2px solid rgba(255,69,58,.58);outline-offset:2px}
+    .color-locator.direct-sample .color-locator-arrow,.color-locator.direct-sample .color-locator-label{display:none!important}
+    .color-locator.direct-sample .color-locator-ring{width:20px;height:20px;left:-10px;top:-10px;border-width:2px;background:rgba(255,69,58,.07)}
+  `;
+  document.head.appendChild(interactionStyle);
 
   function hexToRgb(hex) {
     const m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(String(hex || ''));
     return m ? {r:parseInt(m[1],16), g:parseInt(m[2],16), b:parseInt(m[3],16)} : null;
+  }
+
+  function rgbToHex(r,g,b) {
+    return `#${[r,g,b].map(v => Math.max(0,Math.min(255,v)).toString(16).padStart(2,'0')).join('').toUpperCase()}`;
   }
 
   function rgbToLab(r,g,b) {
@@ -220,39 +235,106 @@
     return locator;
   }
 
-  function showColorLocation(hex, sourceButton) {
-    const point = findRepresentativePixel(hex);
+  function clearLocatedSelection() {
+    document.querySelectorAll('.swatch.color-located,.palette-segment.color-located,#roleGrid .role-card.color-located').forEach(el=>el.classList.remove('color-located'));
+  }
+
+  function placeLocator(point, hex, sourceElement = null, options = {}) {
     if (!point || !canvasStage || !previewCanvas) return;
     const marker = ensureLocator();
+    if (!marker) return;
     const stageRect = canvasStage.getBoundingClientRect();
     const canvasRect = previewCanvas.getBoundingClientRect();
     const left = canvasRect.left-stageRect.left + point.x*canvasRect.width;
     const top = canvasRect.top-stageRect.top + point.y*canvasRect.height;
     marker.style.left = `${left}px`;
     marker.style.top = `${top}px`;
-    marker.querySelector('.color-locator-label').textContent = hex.toUpperCase();
-    marker.classList.remove('visible');
-    void marker.offsetWidth;
+    marker.querySelector('.color-locator-label').textContent = String(hex || '').toUpperCase();
+    marker.classList.toggle('direct-sample', Boolean(options.direct));
     marker.classList.add('visible');
-
-    document.querySelectorAll('.swatch.color-located,.palette-segment.color-located').forEach(el=>el.classList.remove('color-located'));
-    sourceButton?.classList.add('color-located');
-
-    canvasStage.scrollIntoView({behavior:'smooth',block:'center',inline:'nearest'});
-    window.clearTimeout(locatorTimer);
-    locatorTimer = window.setTimeout(() => {
-      marker.classList.remove('visible');
-      sourceButton?.classList.remove('color-located');
-    }, 5200);
+    clearLocatedSelection();
+    sourceElement?.classList.add('color-located');
+    if (options.scroll) canvasStage.scrollIntoView({behavior:'smooth',block:'center',inline:'nearest'});
   }
+
+  function showColorLocation(hex, sourceElement) {
+    const point = findRepresentativePixel(hex);
+    if (!point) return;
+    placeLocator(point, hex, sourceElement, {direct:false, scroll:true});
+  }
+
+  function placeExactTap(event) {
+    if (!previewCanvas?.width || !previewCanvas?.height) return;
+    const rect = previewCanvas.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+    const px = Math.max(0, Math.min(rect.width, event.clientX-rect.left));
+    const py = Math.max(0, Math.min(rect.height, event.clientY-rect.top));
+    const nx = px/rect.width;
+    const ny = py/rect.height;
+    const x = Math.max(0,Math.min(previewCanvas.width-1,Math.floor(nx*previewCanvas.width)));
+    const y = Math.max(0,Math.min(previewCanvas.height-1,Math.floor(ny*previewCanvas.height)));
+    const data = previewCanvas.getContext('2d',{willReadFrequently:true}).getImageData(x,y,1,1).data;
+    const hex = rgbToHex(data[0],data[1],data[2]);
+    placeLocator({x:nx,y:ny}, hex, null, {direct:true, scroll:false});
+  }
+
+  previewCanvas?.addEventListener('pointerdown', event => {
+    activePointerId = event.pointerId;
+    placeExactTap(event);
+    try { previewCanvas.setPointerCapture?.(event.pointerId); } catch {}
+  });
+  previewCanvas?.addEventListener('pointermove', event => {
+    if (activePointerId !== event.pointerId) return;
+    placeExactTap(event);
+  });
+  const endPointer = event => {
+    if (activePointerId === event.pointerId) activePointerId = null;
+  };
+  previewCanvas?.addEventListener('pointerup', endPointer);
+  previewCanvas?.addEventListener('pointercancel', endPointer);
 
   document.addEventListener('click', event => {
     const colorButton = event.target.closest('#swatches .swatch, #paletteStrip .palette-segment');
-    if (!colorButton) return;
-    let hex = colorButton.querySelector('b')?.textContent?.trim();
-    if (!hex) hex = colorButton.title?.match(/#[0-9A-Fa-f]{6}/)?.[0];
+    if (colorButton) {
+      let hex = colorButton.querySelector('b')?.textContent?.trim();
+      if (!hex) hex = colorButton.title?.match(/#[0-9A-Fa-f]{6}/)?.[0];
+      if (hex) window.requestAnimationFrame(() => showColorLocation(hex, colorButton));
+      return;
+    }
+
+    const roleCard = event.target.closest('#roleGrid .role-card');
+    if (!roleCard) return;
+    const hex = roleCard.querySelector('small')?.textContent?.match(/#[0-9A-Fa-f]{6}/)?.[0];
     if (!hex) return;
-    window.requestAnimationFrame(() => showColorLocation(hex, colorButton));
+    window.requestAnimationFrame(() => showColorLocation(hex, roleCard));
+  });
+
+  roleGrid?.addEventListener('keydown', event => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    const roleCard = event.target.closest('.role-card');
+    if (!roleCard) return;
+    event.preventDefault();
+    const hex = roleCard.querySelector('small')?.textContent?.match(/#[0-9A-Fa-f]{6}/)?.[0];
+    if (hex) showColorLocation(hex, roleCard);
+  });
+
+  // New role rows are rendered dynamically, so keep the whole row keyboard/touch accessible.
+  const makeRolesInteractive = () => {
+    roleGrid?.querySelectorAll('.role-card').forEach(card => {
+      if (!card.hasAttribute('tabindex')) card.tabIndex = 0;
+      card.setAttribute('role','button');
+      const name = card.querySelector('b')?.textContent?.trim();
+      const hex = card.querySelector('small')?.textContent?.match(/#[0-9A-Fa-f]{6}/)?.[0];
+      if (name && hex) card.setAttribute('aria-label',`${name}, ${hex}. Show this color on the image.`);
+    });
+  };
+  if (roleGrid) new MutationObserver(makeRolesInteractive).observe(roleGrid,{childList:true,subtree:true});
+  makeRolesInteractive();
+
+  fileInput?.addEventListener('change', () => {
+    locator?.classList.remove('visible');
+    clearLocatedSelection();
+    activePointerId = null;
   });
 
   document.addEventListener('contextmenu', event => event.preventDefault(), { passive: false });
