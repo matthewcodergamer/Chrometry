@@ -8,10 +8,10 @@
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui"],
   "orientation": "any",
-  "background_color": "#f5f5f7",
-  "theme_color": "#f5f5f7",
+  "background_color": "#08090B",
+  "theme_color": "#08090B",
   "icons": [
-    {"src":"./icon-192-v7.png","sizes":"192x192","type":"image/png","purpose":"any"},
-    {"src":"./icon-512-v7.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}
+    {"src":"./icon-192-v9.png","sizes":"192x192","type":"image/png","purpose":"any"},
+    {"src":"./icon-512-v9.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}
   ]
 }
