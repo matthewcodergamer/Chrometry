@@ -1,6 +1,6 @@
-const CACHE='chrometry-final-v1-10';
+const CACHE='chrometry-final-v1-11';
 const CORE=[
-  './','./index.html','./styles.css','./ios-polish.css','./app.js','./ui-polish.js','./ai-look-v2.js','./manifest.webmanifest','./chrometry-icon.svg',
+  './','./index.html','./styles.css','./ios-polish.css','./app.js','./ui-polish.js','./ai-look-v2.js','./game-research.js','./ai-runtime.js','./manifest.webmanifest','./chrometry-icon.svg',
   './apple-touch-icon-v11.png','./icon-192-v11.png','./icon-512-v11.png'
 ];
 self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE)).then(()=>self.skipWaiting())));
