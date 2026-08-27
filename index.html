@@ -77,7 +77,7 @@
                 <span id="roleMode" class="local-badge">LOCAL</span>
               </div>
               <div id="roleGrid" class="role-grid"></div>
-              <p id="roleHint" class="hint">Local labels are fast visual heuristics. AI Refinement first determines whether the image is a game, app UI, photo, artwork, or something else, then rebuilds the semantic palette appropriately.</p>
+              <p id="roleHint" class="hint">Local labels are fast visual heuristics. AI Refinement can identify the game, visible objects and materials, distinguish likely texture color from lighting, and rebuild the Three.js recreation recipe.</p>
             </section>
           </div>
 
@@ -108,7 +108,7 @@
                 <div><span class="section-kicker">AI REFINEMENT</span><h2>Understand & rebuild</h2></div>
                 <span id="aiBadge" class="status-pill neutral">Optional</span>
               </div>
-              <p class="small-copy">AI first identifies the content type, then ignores accidental borders or capture chrome, maps colors to the correct kind of semantic targets, re-clusters the accepted pixels, and regenerates your export. Game-specific roles are only used for actual game screenshots.</p>
+              <p class="small-copy">AI Vision identifies the game when possible, maps visible objects/materials such as grass, sky, gates, roads, buildings and vehicles, estimates texture-vs-lighting contribution, and produces a practical Three.js recreation recipe from screenshot-measured colors.</p>
               <button id="aiBtn" class="action-btn secondary" type="button">Refine palette with AI</button>
               <div id="aiOutput" class="ai-output empty-state">No AI refinement yet. Local palette extraction works without it.</div>
             </section>
@@ -143,5 +143,6 @@
   <script src="https://js.puter.com/v2/"></script>
   <script src="./app.js"></script>
   <script src="./ui-polish.js?v=12"></script>
+  <script src="./ai-refinement.js?v=1"></script>
 </body>
 </html>
