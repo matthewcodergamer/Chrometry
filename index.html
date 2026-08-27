@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Chrometry">
   <meta name="format-detection" content="telephone=no">
-  <meta name="description" content="Extract perceptual palettes from games and other images with optional AI content-aware refinement.">
+  <meta name="description" content="Extract perceptual palettes from games and other images with optional AI scene-look reconstruction.">
   <link rel="manifest" href="./manifest.webmanifest?v=11">
   <link rel="icon" href="./chrometry-icon.svg?v=11" type="image/svg+xml">
   <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon-v11.png">
@@ -31,8 +31,8 @@
         <div class="hero-copy">
           <div class="eyebrow">PERCEPTUAL PALETTE ENGINE</div>
           <h1>Capture a game's visual DNA.</h1>
-          <p>Drop in a game screenshot — or any image you want to study. Chrometry measures the image in perceptual color space, builds a usable palette, and optional AI determines what the image actually is before assigning semantic colors.</p>
-          <div class="hero-chips"><span>CIELAB clustering</span><span>Local-first</span><span>AI refinement</span></div>
+          <p>Drop in a game screenshot — or any image you want to study. Chrometry measures its perceptual colors, and optional AI reconstructs the scene look: materials, gradients, lighting direction, atmosphere, and color grading.</p>
+          <div class="hero-chips"><span>CIELAB clustering</span><span>Local-first</span><span>Scene Look AI</span></div>
         </div>
 
         <div class="upload-wrap">
@@ -77,7 +77,7 @@
                 <span id="roleMode" class="local-badge">LOCAL</span>
               </div>
               <div id="roleGrid" class="role-grid"></div>
-              <p id="roleHint" class="hint">Local labels are fast visual heuristics. AI Refinement can identify the game, visible objects and materials, distinguish likely texture color from lighting, and rebuild the Three.js recreation recipe.</p>
+              <p id="roleHint" class="hint">Local labels are fast visual heuristics. Scene Look AI can identify the game, visible materials, texture-vs-light contribution, sky gradients, light direction, atmosphere and render finish.</p>
             </section>
           </div>
 
@@ -105,12 +105,12 @@
 
             <section class="card ai-card-shell">
               <div class="section-head">
-                <div><span class="section-kicker">AI REFINEMENT</span><h2>Understand & rebuild</h2></div>
+                <div><span class="section-kicker">SCENE LOOK AI</span><h2>Understand & rebuild</h2></div>
                 <span id="aiBadge" class="status-pill neutral">Optional</span>
               </div>
-              <p class="small-copy">AI Vision identifies the game when possible, maps visible objects/materials such as grass, sky, gates, roads, buildings and vehicles, estimates texture-vs-lighting contribution, and produces a practical Three.js recreation recipe from screenshot-measured colors.</p>
-              <button id="aiBtn" class="action-btn secondary" type="button">Refine palette with AI</button>
-              <div id="aiOutput" class="ai-output empty-state">No AI refinement yet. Local palette extraction works without it.</div>
+              <p class="small-copy">AI studies the screenshot as a rendering problem: objects and materials, base/lit/shadow colors, sky and horizon gradients, directional light, fill and bounce, fog/haze, exposure, tone character and post-process finish. The result becomes a practical Three.js recreation recipe.</p>
+              <button id="aiBtn" class="action-btn secondary" type="button">Reconstruct scene look with AI</button>
+              <div id="aiOutput" class="ai-output empty-state">No Scene Look analysis yet. Local palette extraction works without it.</div>
             </section>
 
             <section class="card">
@@ -143,6 +143,6 @@
   <script src="https://js.puter.com/v2/"></script>
   <script src="./app.js"></script>
   <script src="./ui-polish.js?v=12"></script>
-  <script src="./ai-refinement.js?v=1"></script>
+  <script src="./ai-look-v2.js?v=1"></script>
 </body>
 </html>
