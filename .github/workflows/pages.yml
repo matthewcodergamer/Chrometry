@@ -29,6 +29,8 @@ jobs:
           node --check app.js
           node --check ui-polish.js
           node --check ai-look-v2.js
+          node --check game-research.js
+          node --check ai-runtime.js
 
       - name: Generate canonical Chrometry icon assets
         shell: bash
