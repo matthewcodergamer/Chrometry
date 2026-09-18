@@ -21,9 +21,6 @@
   "permissions": [
     "storage"
   ],
-  "host_permissions": [
-    "https://YOUR-PRODUCTION-API.example.com/*"
-  ],
   "minimum_chrome_version": "116",
   "externally_connectable": {
     "matches": [
