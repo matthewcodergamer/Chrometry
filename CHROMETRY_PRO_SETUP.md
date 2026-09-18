@@ -25,3 +25,16 @@ Create a recurring Pro product and monthly/annual prices. Enable Stripe Customer
 
 ## Chrome Web Store
 Load the repository root as an unpacked extension from chrome://extensions. Test free analysis, checkout, activation, Pro AI, expired/canceled subscription behavior and billing management. Before submission, replace the broad Vercel host permission with the exact production API origin and publish a privacy policy/support URL. Clearly identify Chrometry as the seller of the subscription.
+
+
+## Free-tier ads
+
+The free plan now has a clearly labeled native **Sponsored** placement. Pro users do not receive the ad slot.
+
+The extension does **not** use Google AdSense. Google states that AdSense ads may not be distributed through software applications such as browser extensions. citeturn0search0turn0search8
+
+For real ad revenue, connect the slot to an extension-compatible advertising partner or sell direct sponsorships. Current extension-specific networks include ExtAds and AdsOnBread; both advertise native placements designed for browser extensions, but you should review their contracts, privacy requirements, payout terms, and Chrome Web Store compliance yourself before going live. citeturn1search8turn1search10
+
+The current implementation intentionally keeps the ad interface provider-neutral. Set the sponsor variables in .env for a direct sponsor, or replace the /api/ads response with the approved provider's local SDK/API integration.
+
+Recommended placement: one small sponsor card near the workspace/sidebar, never a pop-up, redirect, injected page ad, or UI element that could be mistaken for a control.
