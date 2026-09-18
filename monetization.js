@@ -121,6 +121,7 @@
         headers: { Authorization: 'Bearer ' + state.token }
       });
       const data = await response.json();
+      if (data.token) { saveToken(data.token); state.token = data.token; }
       if (!response.ok || !data.active) throw new Error(data.error || 'Subscription is not active.');
       setPro(true);
       setStatus('Active subscription');
