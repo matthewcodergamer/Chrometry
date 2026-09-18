@@ -6,8 +6,8 @@
       <stop offset="1" stop-color="#08090B"/>
     </linearGradient>
     <radialGradient id="bgSheen" cx="0.28" cy="0.08" r="0.92">
-      <stop offset="0" stop-color="#FFFFFF" stop-opacity=".065"/>
-      <stop offset=".36" stop-color="#FFFFFF" stop-opacity=".018"/>
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity=".08"/>
+      <stop offset=".36" stop-color="#FFFFFF" stop-opacity=".02"/>
       <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
     </radialGradient>
     <linearGradient id="blue" x1="0" y1="0" x2="0" y2="1">
@@ -32,25 +32,28 @@
       <stop offset=".62" stop-color="#FFFFFF" stop-opacity=".012"/>
       <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
     </linearGradient>
+    <clipPath id="roundTile">
+      <rect x="0" y="0" width="1024" height="1024" rx="228" ry="228"/>
+    </clipPath>
   </defs>
 
-  <rect width="1024" height="1024" fill="url(#bg)"/>
-  <rect width="1024" height="1024" fill="url(#bgSheen)"/>
-
-  <!-- Blue and yellow are the same shorter height; green is the single tallest bar. -->
-  <g>
-    <rect x="158" y="232" width="176" height="560" rx="88" fill="url(#blue)"/>
-    <rect x="162" y="236" width="168" height="552" rx="84" fill="none" stroke="#FFFFFF" stroke-opacity=".14" stroke-width="6"/>
-    <path d="M205 309c0-34 27-61 61-61" fill="none" stroke="url(#edgeSpec)" stroke-width="11" stroke-linecap="round"/>
-  </g>
-  <g>
-    <rect x="424" y="146" width="176" height="724" rx="88" fill="url(#green)"/>
-    <rect x="428" y="150" width="168" height="716" rx="84" fill="none" stroke="#FFFFFF" stroke-opacity=".16" stroke-width="6"/>
-    <path d="M471 223c0-34 27-61 61-61" fill="none" stroke="url(#edgeSpec)" stroke-width="11" stroke-linecap="round"/>
-  </g>
-  <g>
-    <rect x="690" y="232" width="176" height="560" rx="88" fill="url(#gold)"/>
-    <rect x="694" y="236" width="168" height="552" rx="84" fill="none" stroke="#FFFFFF" stroke-opacity=".15" stroke-width="6"/>
-    <path d="M737 309c0-34 27-61 61-61" fill="none" stroke="url(#edgeSpec)" stroke-width="11" stroke-linecap="round"/>
+  <g clip-path="url(#roundTile)">
+    <rect width="1024" height="1024" fill="url(#bg)"/>
+    <rect width="1024" height="1024" fill="url(#bgSheen)"/>
+    <g>
+      <rect x="158" y="232" width="176" height="560" rx="88" fill="url(#blue)"/>
+      <rect x="162" y="236" width="168" height="552" rx="84" fill="none" stroke="#FFFFFF" stroke-opacity=".14" stroke-width="6"/>
+      <path d="M205 309c0-34 27-61 61-61" fill="none" stroke="url(#edgeSpec)" stroke-width="11" stroke-linecap="round"/>
+    </g>
+    <g>
+      <rect x="424" y="146" width="176" height="724" rx="88" fill="url(#green)"/>
+      <rect x="428" y="150" width="168" height="716" rx="84" fill="none" stroke="#FFFFFF" stroke-opacity=".16" stroke-width="6"/>
+      <path d="M471 223c0-34 27-61 61-61" fill="none" stroke="url(#edgeSpec)" stroke-width="11" stroke-linecap="round"/>
+    </g>
+    <g>
+      <rect x="690" y="232" width="176" height="560" rx="88" fill="url(#gold)"/>
+      <rect x="694" y="236" width="168" height="552" rx="84" fill="none" stroke="#FFFFFF" stroke-opacity=".15" stroke-width="6"/>
+      <path d="M737 309c0-34 27-61 61-61" fill="none" stroke="url(#edgeSpec)" stroke-width="11" stroke-linecap="round"/>
+    </g>
   </g>
 </svg>

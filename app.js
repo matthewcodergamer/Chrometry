@@ -45,21 +45,18 @@
   function waitFrame(){ return new Promise(r=>requestAnimationFrame(()=>r())); }
   function clamp(v,min=0,max=1){ return Math.max(min,Math.min(max,Number(v))); }
 
-  // Appearance always follows iOS/system. No saved manual override.
+  // Appearance is owned by the head boot script + ui-polish. Do not rewrite
+  // data-appearance here — that caused a white-then-dark flash on reload.
   const systemTheme = matchMedia('(prefers-color-scheme: dark)');
   function syncSystemAppearance(){
-    const dark=systemTheme.matches;
-    document.documentElement.dataset.appearance=dark?'dark':'light';
-    els.themeIndicator.textContent=dark?'◐':'◐';
-    els.themeIndicator.setAttribute('aria-label',`Appearance follows iOS: ${dark?'dark':'light'} mode`);
+    if (document.documentElement.dataset.appearance) return;
+    const saved = (()=>{ try { return localStorage.getItem('chrometry-appearance'); } catch { return null; } })();
+    const dark = saved ? saved === 'dark' : systemTheme.matches;
+    document.documentElement.dataset.appearance = dark ? 'dark' : 'light';
     const fallback=document.querySelector('meta[name="theme-color"]:not([media])');
     if(fallback) fallback.content=dark?'#08080a':'#f5f5f7';
   }
   syncSystemAppearance();
-  systemTheme.addEventListener?.('change',syncSystemAppearance);
-  els.themeIndicator.addEventListener('click',()=>{
-    els.themeIndicator.animate?.([{transform:'scale(.94)'},{transform:'scale(1)'}],{duration:180,easing:'ease-out'});
-  });
 
   document.addEventListener('gesturestart',e=>e.preventDefault(),{passive:false});
   document.addEventListener('selectstart',e=>e.preventDefault());

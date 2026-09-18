@@ -3,28 +3,46 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no,maximum-scale=1">
-  <meta id="themeColor" name="theme-color" content="#f5f5f7">
+  <meta id="themeColor" name="theme-color" content="#08080a">
+  <meta name="color-scheme" content="dark light">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Chrometry">
   <meta name="format-detection" content="telephone=no">
   <meta name="description" content="Extract perceptual palettes from games and other images with optional AI scene-look reconstruction.">
-  <link rel="manifest" href="./manifest.webmanifest?v=13">
-  <link rel="icon" href="./chrometry-icon.svg?v=13" type="image/svg+xml">
+  <style>
+    html,body{background:#08080a;color:#f5f5f7}
+    html[data-appearance="light"],html[data-appearance="light"] body{background:#f5f5f7;color:#101012}
+    html[data-appearance="dark"],html[data-appearance="dark"] body{background:#08080a;color:#f5f5f7}
+  </style>
+  <script>
+    (function(){var d=true;try{var s=localStorage.getItem('chrometry-appearance');if(s==='light'||s==='dark')d=s==='dark';else d=matchMedia('(prefers-color-scheme: dark)').matches;}catch(e){}var r=document.documentElement;r.dataset.appearance=d?'dark':'light';r.style.colorScheme=d?'dark':'light';r.style.backgroundColor=d?'#08080a':'#f5f5f7';var m=document.getElementById('themeColor');if(m)m.content=d?'#08080a':'#f5f5f7';})();
+  </script>
+  <link rel="manifest" href="./manifest.webmanifest?v=14">
+  <link rel="icon" href="./chrometry-icon.svg?v=14" type="image/svg+xml">
   <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon-v11.png">
-  <link rel="stylesheet" href="./styles.css">
-  <link rel="stylesheet" href="./ios-polish.css?v=13">
-  <link rel="stylesheet" href="./polish-v13.css?v=13">
+  <link rel="stylesheet" href="./styles.css?v=14">
+  <link rel="stylesheet" href="./ios-polish.css?v=14">
+  <link rel="stylesheet" href="./polish-v13.css?v=14">
   <title>Chrometry — Palette Analyzer</title>
 </head>
 <body>
+  <div class="ambient-stage" aria-hidden="true">
+    <i class="ambient-orb a"></i>
+    <i class="ambient-orb b"></i>
+    <i class="ambient-orb c"></i>
+    <i class="ambient-orb light"></i>
+  </div>
   <div class="app-shell">
     <header class="topbar glass">
-      <a class="brand" href="#" aria-label="Chrometry home">
-        <span class="brand-mark" aria-hidden="true" style="background-image:url('./chrometry-icon.svg?v=13');background-size:100% 100%;background-repeat:no-repeat;background-position:center;box-shadow:none;filter:none"><i></i><i></i><i></i></span>
+      <a class="brand" href="./index.html" aria-label="Chrometry home">
+        <span class="brand-mark" aria-hidden="true"></span>
         <span class="brand-copy"><strong>Chrometry</strong><small>COLORIMETRY</small></span>
       </a>
-      <button id="themeIndicator" class="appearance-indicator" type="button" aria-label="Switch appearance" aria-pressed="false">◐</button>
+      <div class="topbar-actions">
+        <a id="proBtn" class="pro-chip" href="./pro.html">Upgrade to Pro</a>
+        <button id="themeIndicator" class="appearance-indicator" type="button" aria-label="Switch appearance" aria-pressed="false">◐</button>
+      </div>
     </header>
 
     <main id="appScroll" class="app-scroll">
@@ -142,11 +160,11 @@
   </div>
 
   <script src="https://js.puter.com/v2/"></script>
-  <script src="./app.js"></script>
-  <script src="./ui-polish.js?v=13"></script>
+  <script src="./app.js?v=14"></script>
+  <script src="./ui-polish.js?v=14"></script>
   <script src="./ai-look-v2.js?v=1"></script>
   <script src="./game-research.js?v=1"></script>
   <script src="./ai-runtime.js?v=1"></script>
-  <script src="./polish-v13.js?v=13"></script>
+  <script src="./polish-v13.js?v=14"></script>
 </body>
 </html>

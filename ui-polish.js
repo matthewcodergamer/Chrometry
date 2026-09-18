@@ -52,7 +52,8 @@
   });
 
   systemTheme.addEventListener?.('change', () => {
-    applyAppearance(savedAppearance() || (systemTheme.matches ? 'dark' : 'light'), true);
+    if (savedAppearance()) return;
+    applyAppearance(systemTheme.matches ? 'dark' : 'light', false);
   });
 
   function readPreferences() {
