@@ -36,14 +36,9 @@
       pro.removeAttribute('href');
     }
   } else if (pro) {
-    pro.setAttribute('href', './pro.html');
-    pro.addEventListener('click', (event) => {
-      if (pro.classList.contains('is-pro')) {
-        event.preventDefault();
-        toast('Pro is active');
-        return;
-      }
-    });
+    pro.setAttribute('href', STRIPE_PRO_URL);
+    pro.setAttribute('target', '_blank');
+    pro.setAttribute('rel', 'noopener noreferrer');
   }
 
   const semantic = [...document.querySelectorAll('.section-kicker')].find(el => /semantic/i.test(el.textContent || ''));

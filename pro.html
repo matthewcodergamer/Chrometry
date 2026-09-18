@@ -18,7 +18,12 @@
   <script>
     (function () {
       var url = 'https://buy.stripe.com/test_aFadRb9XR7WD60d4Ic14404';
-      try { location.replace(url); } catch (e) {}
+      try {
+        if (window.top && window.top !== window) window.top.location.href = url;
+        else location.replace(url);
+      } catch (e) {
+        location.href = url;
+      }
     })();
   </script>
 </head>
@@ -27,7 +32,7 @@
     <div class="card">
       <h1>Chrometry Pro</h1>
       <p>Unlock Scene Look extras and the full eyedropper workflow. You’ll continue to a secure Stripe checkout.</p>
-      <a class="pay" href="https://buy.stripe.com/test_aFadRb9XR7WD60d4Ic14404">Continue to checkout</a>
+      <a class="pay" href="https://buy.stripe.com/test_aFadRb9XR7WD60d4Ic14404" target="_top" rel="noopener">Continue to checkout</a>
       <a class="back" href="./index.html">Back to Chrometry</a>
     </div>
   </div>
