@@ -1,0 +1,26 @@
+name: Build Chrometry Chrome extension
+on:
+  workflow_dispatch:
+    inputs:
+      api_base:
+        description: 'Production Pro API origin, e.g. https://api.example.com'
+        required: true
+        type: string
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install icon tooling
+        run: sudo apt-get update -qq && sudo apt-get install -y --no-install-recommends librsvg2-bin zip
+      - name: Build extension
+        env:
+          CHROMETRY_API_BASE_URL: ${{ inputs.api_base }}
+        run: bash build-extension.sh
+      - name: Upload extension ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: chrometry-extension
+          path: dist/chrometry-extension.zip
