@@ -1,0 +1,42 @@
+name: Build Chrometry Chrome extension
+on:
+  push:
+    branches: [main, monetized-extension-pro-v1]
+  workflow_dispatch:
+    inputs:
+      api_base:
+        description: 'Production Pro API origin, e.g. https://api.example.com'
+        required: false
+        default: ''
+        type: string
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install icon tooling
+        run: sudo apt-get update -qq && sudo apt-get install -y --no-install-recommends librsvg2-bin zip
+      - name: Verify JavaScript
+        run: |
+          node --check app.js
+          node --check ui-polish.js
+          node --check monetization.js
+          node --check extension-background.js
+          node --check api/_shared.js
+          node --check api/checkout.js
+          node --check api/activate.js
+          node --check api/verify.js
+          node --check api/portal.js
+          node --check api/ai.js
+      - name: Build extension
+        env:
+          CHROMETRY_API_BASE_URL: ${{ inputs.api_base || vars.CHROMETRY_API_BASE_URL || '' }}
+          CHROMETRY_WEB_URL: ${{ vars.CHROMETRY_WEB_URL || '' }}
+        run: bash build-extension.sh
+      - name: Upload extension ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: chrometry-extension
+          path: dist/chrometry-extension.zip
