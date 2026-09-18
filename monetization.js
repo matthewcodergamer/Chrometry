@@ -1,39 +1,358 @@
 (() => {
   'use strict';
-  const API=window.CHROMETRY_API_BASE_URL||localStorage.getItem('chrometry-api-base')||'';
-  const KEY='chrometry-pro-license-v1';
-  const state={token:null,pro:false,busy:false};
-  const $=id=>document.getElementById(id);
-  const api=p=>API?`${API.replace(/\/$/,'')}${p}`:p;
-  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const read=()=>{try{return localStorage.getItem(KEY)}catch{return null}};
-  const save=v=>{try{localStorage.setItem(KEY,v)}catch{}};
-  const clear=()=>{try{localStorage.removeItem(KEY)}catch{}};
 
-  function styles(){const s=document.createElement('style');s.textContent=`
-    .chrometry-pro-card{position:relative;overflow:hidden}.chrometry-pro-card:before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 90% 0%,rgba(111,214,255,.15),transparent 38%)}
-    .chrometry-pro-copy{font-size:11px;line-height:1.55;color:var(--muted)}.chrometry-pro-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.chrometry-pro-actions .action-btn{margin-top:0;flex:1 1 150px}.chrometry-pro-actions .quiet-btn{margin-top:0;min-height:40px;font-size:10px}.chrometry-billing-status{min-height:18px;margin-top:8px;font-size:9px;color:var(--muted)}.chrometry-pro-card.pro-active{box-shadow:inset 0 0 0 1px rgba(114,220,147,.28),0 12px 30px rgba(0,0,0,.05)}
-    .chrometry-lock{margin-left:6px;font-size:9px;font-weight:800;color:var(--muted)}.chrometry-modal{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;padding:20px;background:rgba(0,0,0,.46);backdrop-filter:blur(18px)}.chrometry-modal-card{width:min(440px,100%);padding:22px;border-radius:24px;background:var(--surface-solid,#fff);color:var(--ink,#111);box-shadow:0 24px 80px rgba(0,0,0,.25)}.chrometry-modal-card h3{font-size:22px;margin:0 0 7px}.chrometry-modal-card p{font-size:12px;line-height:1.55;color:var(--muted);margin:0 0 16px}
-  `;document.head.appendChild(s)}
-  function ui(){const c=document.createElement('section');c.id='chrometryProCard';c.className='card chrometry-pro-card';c.innerHTML=`
-    <div class="section-head"><div><span class="section-kicker">CHROMETRY PRO</span><h2 id="planTitle">Free plan</h2></div><span id="planBadge" class="status-pill neutral">FREE</span></div>
-    <div id="planCopy" class="chrometry-pro-copy">Local CIELAB palette extraction stays free. Pro unlocks secure server-powered Scene Look AI and research.</div>
-    <div class="chrometry-pro-actions"><button id="upgrade" class="action-btn" type="button">Upgrade to Pro</button><button id="manage" class="quiet-btn" type="button" hidden>Manage subscription</button></div>
-    <div id="billingStatus" class="chrometry-billing-status" aria-live="polite"></div>`;
-    document.querySelector('.workspace aside')?.prepend(c);
-    $('upgrade').onclick=()=>checkout();$('manage').onclick=()=>portal();
+  const API = window.CHROMETRY_API_BASE_URL || localStorage.getItem('chrometry-api-base') || '';
+  const LICENSE_KEY = 'chrometry-pro-license-v1';
+  const state = { token: null, pro: false, busy: false };
+
+  const $ = (id) => document.getElementById(id);
+  const api = (path) => API ? `${API.replace(/\/$/, '')}${path}` : path;
+  const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (c) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+
+  function readToken() {
+    try { return localStorage.getItem(LICENSE_KEY); } catch { return null; }
   }
-  function status(m,error=false){const e=$('billingStatus');if(e){e.textContent=m||'';e.style.color=error?'#ff453a':''}}
-  function setPro(active){state.pro=!!active;const c=$('chrometryProCard'),t=$('planTitle'),b=$('planBadge'),copy=$('planCopy'),up=$('upgrade'),mg=$('manage');c?.classList.toggle('pro-active',active);if(active){t.textContent='Chrometry Pro';b.textContent='PRO';b.className='status-pill';copy.textContent='Pro is active. AI requests run through Chrometry\'s secure gateway; no API key is shipped in the extension.';if(up)up.hidden=true;if(mg)mg.hidden=false}else{t.textContent='Free plan';b.textContent='FREE';b.className='status-pill neutral';copy.textContent='Local CIELAB palette extraction stays free. Pro unlocks secure server-powered Scene Look AI and research.';if(up)up.hidden=false;if(mg)mg.hidden=true}}
-  async function verify(){state.token=read();if(!state.token){setPro(false);return false}try{const r=await fetch(api('/api/verify'),{headers:{Authorization:'Bearer '+state.token}});const d=await r.json();if(!r.ok||!d.active)throw Error(d.error||'Subscription is not active.');setPro(true);status('Active subscription');return true}catch(e){clear();state.token=null;setPro(false);status(e.message||'Could not verify Pro.',true);return false}}
-  async function checkout(){if(state.busy)return;state.busy=true;status('Opening secure Stripe Checkout…');try{const r=await fetch(api('/api/checkout'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({plan:'monthly'})});const d=await r.json();if(!r.ok||!d.url)throw Error(d.error||'Checkout failed.');location.href=d.url}catch(e){status(e.message,true)}finally{state.busy=false}}
-  async function activate(){const id=new URLSearchParams(location.search).get('checkout_session_id');if(!id)return;status('Verifying Stripe purchase…');try{const r=await fetch(api('/api/activate'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session_id:id})});const d=await r.json();if(!r.ok||!d.token)throw Error(d.error||'Purchase verification failed.');save(d.token);history.replaceState({},'',location.pathname);await verify();status('Pro activated. AI is ready.')}catch(e){status(e.message,true)}}
-  async function portal(){if(!state.token)return checkout();try{const r=await fetch(api('/api/portal'),{method:'POST',headers:{Authorization:'Bearer '+state.token,'Content-Type':'application/json'}});const d=await r.json();if(!r.ok||!d.url)throw Error(d.error||'Billing portal failed.');location.href=d.url}catch(e){status(e.message,true)}}
-  function palette(){return [...document.querySelectorAll('#swatches .swatch')].map(x=>{const h=x.querySelector('b')?.textContent?.trim();const m=x.querySelector('small')?.textContent||'';const n=Number(m.match(/([\d.]+)%/)?.[1]||0);return /^#[0-9a-f]{6}$/i.test(h||'')?{hex:h.toUpperCase(),coverage:n}:null}).filter(Boolean)}
-  function modal(){if(document.querySelector('.chrometry-modal'))return;const m=document.createElement('div');m.className='chrometry-modal';m.innerHTML=`<div class="chrometry-modal-card"><h3>Unlock Chrometry Pro</h3><p>Keep the full local palette engine free. Pro adds secure visual AI, game identification, material reconstruction guidance and research-backed rendering notes.</p><div class="chrometry-pro-actions"><button id="modalUpgrade" class="action-btn" type="button">Continue to Stripe</button><button id="modalClose" class="quiet-btn" type="button">Not now</button></div></div>`;document.body.appendChild(m);$('modalClose').onclick=()=>m.remove();$('modalUpgrade').onclick=()=>{m.remove();checkout()};m.onclick=e=>{if(e.target===m)m.remove()}}
-  function render(a){const o=$('aiOutput');if(!o)return;const x=a.analysis||a,l=x.lighting||{},els=Array.isArray(x.elements)?x.elements.slice(0,14):[],notes=Array.isArray(x.recreation_notes)?x.recreation_notes:[];o.className='ai-output';o.innerHTML=`<div class="ai-grid"><div class="ai-card"><b>${esc(x.game||'Unknown')}${x.is_game?' · '+Math.round(Number(x.confidence||0))+'% confidence':''}</b><span>${esc(x.scene||'')}</span></div><div class="ai-card"><b>Visual style</b><span>${esc(x.visual_style||'')}</span></div><div class="ai-card"><b>Lighting</b><span>${esc(l.analysis||'No lighting summary returned.')}</span></div>${els.map(e=>`<div class="ai-card"><b>${esc(e.name||'Element')} · ${esc(e.color_source||'unknown')}</b><span>${esc(e.recreation||e.material||'')}${e.base_hex?' · '+esc(e.base_hex):''}</span></div>`).join('')}${notes.length?`<div class="ai-card"><b>Recreation notes</b><span>${notes.map(esc).join(' • ')}</span></div>`:''}</div>`;const b=$('aiBadge');if(b){b.textContent='PRO AI';b.className='status-pill'}}
-  async function runAI(){if(!state.pro){modal();return}if(state.busy)return;const canvas=$('previewCanvas');if(!canvas?.width){status('Load an image first.',true);return}state.busy=true;const btn=$('aiBtn'),old=btn?.innerHTML;if(btn){btn.disabled=true;btn.textContent='Analyzing with Pro AI…'}try{const r=await fetch(api('/api/ai'),{method:'POST',headers:{Authorization:'Bearer '+state.token,'Content-Type':'application/json'},body:JSON.stringify({image:canvas.toDataURL('image/jpeg',.9),palette:palette()})});const d=await r.json();if(!r.ok)throw Error(d.error||'Pro AI failed.');render(d);status('Pro AI analysis complete.')}catch(e){if(/license|subscription|expired|unauthorized/i.test(e.message||''))await verify();const o=$('aiOutput');if(o){o.className='ai-output';o.textContent=e.message||'Pro AI failed.'}status(e.message||'Pro AI failed.',true)}finally{state.busy=false;if(btn){btn.disabled=false;btn.innerHTML=old||'Reconstruct scene look with AI <span class="chrometry-lock">PRO</span>'}}}}
-  function intercept(){document.addEventListener('click',e=>{const b=e.target.closest?.('#aiBtn');if(!b)return;e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();runAI()},true)}
-  async function init(){styles();ui();intercept();if(!API)status('Deploy the Pro API and set CHROMETRY_API_BASE_URL to enable checkout and Pro AI.');await activate();await verify();$('aiBtn')?.insertAdjacentHTML('beforeend',' <span class="chrometry-lock">PRO</span>')}
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
+
+  function saveToken(value) {
+    try { localStorage.setItem(LICENSE_KEY, value); } catch {}
+  }
+
+  function clearToken() {
+    try { localStorage.removeItem(LICENSE_KEY); } catch {}
+  }
+
+  function setStatus(message, error = false) {
+    const el = $('billingStatus');
+    if (!el) return;
+    el.textContent = message || '';
+    el.style.color = error ? '#ff453a' : '';
+  }
+
+  function addStyles() {
+    const style = document.createElement('style');
+    style.textContent = `
+      .chrometry-pro-card{position:relative;overflow:hidden}
+      .chrometry-pro-card:before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 90% 0%,rgba(111,214,255,.15),transparent 38%)}
+      .chrometry-pro-copy{font-size:11px;line-height:1.55;color:var(--muted)}
+      .chrometry-pro-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+      .chrometry-pro-actions .action-btn{margin-top:0;flex:1 1 150px}
+      .chrometry-pro-actions .quiet-btn{margin-top:0;min-height:40px;font-size:10px}
+      .chrometry-billing-status{min-height:18px;margin-top:8px;font-size:9px;color:var(--muted)}
+      .chrometry-pro-card.pro-active{box-shadow:inset 0 0 0 1px rgba(114,220,147,.28),0 12px 30px rgba(0,0,0,.05)}
+      .chrometry-lock{margin-left:6px;font-size:9px;font-weight:800;color:var(--muted)}
+      .chrometry-modal{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;padding:20px;background:rgba(0,0,0,.46);backdrop-filter:blur(18px)}
+      .chrometry-modal-card{width:min(440px,100%);padding:22px;border-radius:24px;background:var(--surface-solid,#fff);color:var(--ink,#111);box-shadow:0 24px 80px rgba(0,0,0,.25)}
+      .chrometry-modal-card h3{font-size:22px;margin:0 0 7px}
+      .chrometry-modal-card p{font-size:12px;line-height:1.55;color:var(--muted);margin:0 0 16px}
+      .chrometry-ad{margin:10px 0;padding:12px 13px;border:1px solid rgba(127,127,127,.18);border-radius:15px;background:rgba(127,127,127,.055);font-size:10px;line-height:1.45}
+      .chrometry-ad-label{font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:800;margin-bottom:5px}
+      .chrometry-ad a{display:block;color:inherit;text-decoration:none}
+      .chrometry-ad strong{display:block;font-size:11px;margin-bottom:3px}
+      .chrometry-ad small{display:block;color:var(--muted)}
+      .chrometry-ad img{width:100%;max-height:86px;object-fit:cover;border-radius:9px;margin-bottom:8px}
+    `;
+    document.head.appendChild(style);
+  }
+
+  function createPlanCard() {
+    if (document.getElementById('chrometryProCard')) return;
+    const card = document.createElement('section');
+    card.id = 'chrometryProCard';
+    card.className = 'card chrometry-pro-card';
+    card.innerHTML = `
+      <div class="section-head">
+        <div><span class="section-kicker">CHROMETRY PRO</span><h2 id="planTitle">Free plan</h2></div>
+        <span id="planBadge" class="status-pill neutral">FREE</span>
+      </div>
+      <div id="planCopy" class="chrometry-pro-copy">Local palette extraction stays free. Free users see clearly labeled sponsored recommendations; Pro removes ads and unlocks secure Scene Look AI.</div>
+      <div class="chrometry-pro-actions">
+        <button id="upgrade" class="action-btn" type="button">Upgrade to Pro</button>
+        <button id="manage" class="quiet-btn" type="button" hidden>Manage subscription</button>
+      </div>
+      <div id="billingStatus" class="chrometry-billing-status" aria-live="polite"></div>`;
+    document.querySelector('.workspace aside')?.prepend(card);
+    $('upgrade')?.addEventListener('click', checkout);
+    $('manage')?.addEventListener('click', openPortal);
+  }
+
+  function setPro(active) {
+    state.pro = Boolean(active);
+    const card = $('chrometryProCard');
+    const title = $('planTitle');
+    const badge = $('planBadge');
+    const copy = $('planCopy');
+    const upgrade = $('upgrade');
+    const manage = $('manage');
+
+    card?.classList.toggle('pro-active', state.pro);
+
+    if (state.pro) {
+      if (title) title.textContent = 'Chrometry Pro';
+      if (badge) { badge.textContent = 'PRO'; badge.className = 'status-pill'; }
+      if (copy) copy.textContent = 'Pro is active. Ads are disabled and AI requests run through Chrometry\'s secure gateway.';
+      if (upgrade) upgrade.hidden = true;
+      if (manage) manage.hidden = false;
+    } else {
+      if (title) title.textContent = 'Free plan';
+      if (badge) { badge.textContent = 'FREE'; badge.className = 'status-pill neutral'; }
+      if (copy) copy.textContent = 'Local palette extraction stays free. Free users see clearly labeled sponsored recommendations; Pro removes ads and unlocks secure Scene Look AI.';
+      if (upgrade) upgrade.hidden = false;
+      if (manage) manage.hidden = true;
+    }
+
+    if (window.ChrometryAds) window.ChrometryAds.setEnabled(!state.pro);
+  }
+
+  async function verify() {
+    state.token = readToken();
+    if (!state.token) {
+      setPro(false);
+      return false;
+    }
+
+    try {
+      const response = await fetch(api('/api/verify'), {
+        headers: { Authorization: 'Bearer ' + state.token }
+      });
+      const data = await response.json();
+      if (!response.ok || !data.active) throw new Error(data.error || 'Subscription is not active.');
+      setPro(true);
+      setStatus('Active subscription');
+      return true;
+    } catch (error) {
+      clearToken();
+      state.token = null;
+      setPro(false);
+      setStatus(error.message || 'Could not verify Pro.', true);
+      return false;
+    }
+  }
+
+  async function checkout() {
+    if (state.busy) return;
+    state.busy = true;
+    setStatus('Opening secure Stripe Checkout…');
+
+    try {
+      const response = await fetch(api('/api/checkout'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan: 'monthly' })
+      });
+      const data = await response.json();
+      if (!response.ok || !data.url) throw new Error(data.error || 'Checkout failed.');
+      window.location.href = data.url;
+    } catch (error) {
+      setStatus(error.message || 'Checkout failed.', true);
+    } finally {
+      state.busy = false;
+    }
+  }
+
+  async function activateFromCheckout() {
+    const sessionId = new URLSearchParams(window.location.search).get('checkout_session_id');
+    if (!sessionId) return;
+
+    setStatus('Verifying Stripe purchase…');
+
+    try {
+      const response = await fetch(api('/api/activate'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: sessionId })
+      });
+      const data = await response.json();
+      if (!response.ok || !data.token) throw new Error(data.error || 'Purchase verification failed.');
+
+      saveToken(data.token);
+      window.history.replaceState({}, '', window.location.pathname);
+      await verify();
+      setStatus('Pro activated. Ads are now disabled and AI is ready.');
+    } catch (error) {
+      setStatus(error.message || 'Purchase activation failed.', true);
+    }
+  }
+
+  async function openPortal() {
+    if (!state.token) return checkout();
+
+    try {
+      const response = await fetch(api('/api/portal'), {
+        method: 'POST',
+        headers: {
+          Authorization: 'Bearer ' + state.token,
+          'Content-Type': 'application/json'
+        }
+      });
+      const data = await response.json();
+      if (!response.ok || !data.url) throw new Error(data.error || 'Billing portal failed.');
+      window.location.href = data.url;
+    } catch (error) {
+      setStatus(error.message || 'Unable to open billing portal.', true);
+    }
+  }
+
+  function palette() {
+    return [...document.querySelectorAll('#swatches .swatch')]
+      .map((swatch) => {
+        const hex = swatch.querySelector('b')?.textContent?.trim();
+        const text = swatch.querySelector('small')?.textContent || '';
+        const coverage = Number(text.match(/([\d.]+)%/)?.[1] || 0);
+        return /^#[0-9a-f]{6}$/i.test(hex || '') ? { hex: hex.toUpperCase(), coverage } : null;
+      })
+      .filter(Boolean);
+  }
+
+  function showUpgradeModal() {
+    if (document.querySelector('.chrometry-modal')) return;
+
+    const modal = document.createElement('div');
+    modal.className = 'chrometry-modal';
+    modal.innerHTML = `
+      <div class="chrometry-modal-card">
+        <h3>Unlock Chrometry Pro</h3>
+        <p>Pro removes sponsored ads and adds secure visual AI, game identification, material reconstruction guidance and research-backed rendering notes.</p>
+        <div class="chrometry-pro-actions">
+          <button id="modalUpgrade" class="action-btn" type="button">Continue to Stripe</button>
+          <button id="modalClose" class="quiet-btn" type="button">Not now</button>
+        </div>
+      </div>`;
+
+    document.body.appendChild(modal);
+    $('modalClose')?.addEventListener('click', () => modal.remove());
+    $('modalUpgrade')?.addEventListener('click', () => {
+      modal.remove();
+      checkout();
+    });
+    modal.addEventListener('click', (event) => {
+      if (event.target === modal) modal.remove();
+    });
+  }
+
+  function renderAI(data) {
+    const output = $('aiOutput');
+    if (!output) return;
+
+    const analysis = data.analysis || data;
+    const lighting = analysis.lighting || {};
+    const elements = Array.isArray(analysis.elements) ? analysis.elements.slice(0, 14) : [];
+    const notes = Array.isArray(analysis.recreation_notes) ? analysis.recreation_notes : [];
+
+    output.className = 'ai-output';
+    output.innerHTML = `
+      <div class="ai-grid">
+        <div class="ai-card"><b>${esc(analysis.game || 'Unknown')}${analysis.is_game ? ' · ' + Math.round(Number(analysis.confidence || 0)) + '% confidence' : ''}</b><span>${esc(analysis.scene || '')}</span></div>
+        <div class="ai-card"><b>Visual style</b><span>${esc(analysis.visual_style || '')}</span></div>
+        <div class="ai-card"><b>Lighting</b><span>${esc(lighting.analysis || 'No lighting summary returned.')}</span></div>
+        ${elements.map((element) => `
+          <div class="ai-card">
+            <b>${esc(element.name || 'Element')} · ${esc(element.color_source || 'unknown')}</b>
+            <span>${esc(element.recreation || element.material || '')}${element.base_hex ? ' · ' + esc(element.base_hex) : ''}</span>
+          </div>`).join('')}
+        ${notes.length ? `<div class="ai-card"><b>Recreation notes</b><span>${notes.map(esc).join(' • ')}</span></div>` : ''}
+      </div>`;
+
+    const badge = $('aiBadge');
+    if (badge) {
+      badge.textContent = 'PRO AI';
+      badge.className = 'status-pill';
+    }
+  }
+
+  async function runAI() {
+    if (!state.pro) {
+      showUpgradeModal();
+      return;
+    }
+
+    if (state.busy) return;
+
+    const canvas = $('previewCanvas');
+    if (!canvas?.width) {
+      setStatus('Load an image first.', true);
+      return;
+    }
+
+    state.busy = true;
+    const button = $('aiBtn');
+    const oldLabel = button?.innerHTML;
+
+    if (button) {
+      button.disabled = true;
+      button.textContent = 'Analyzing with Pro AI…';
+    }
+
+    try {
+      const response = await fetch(api('/api/ai'), {
+        method: 'POST',
+        headers: {
+          Authorization: 'Bearer ' + state.token,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          image: canvas.toDataURL('image/jpeg', 0.9),
+          palette: palette()
+        })
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Pro AI failed.');
+
+      renderAI(data);
+      setStatus('Pro AI analysis complete.');
+    } catch (error) {
+      if (/license|subscription|expired|unauthorized/i.test(error.message || '')) {
+        await verify();
+      }
+      const output = $('aiOutput');
+      if (output) {
+        output.className = 'ai-output';
+        output.textContent = error.message || 'Pro AI failed.';
+      }
+      setStatus(error.message || 'Pro AI failed.', true);
+    } finally {
+      state.busy = false;
+      if (button) {
+        button.disabled = false;
+        button.innerHTML = oldLabel || 'Reconstruct scene look with AI <span class="chrometry-lock">PRO</span>';
+      }
+    }
+  }
+
+  function interceptAIButton() {
+    document.addEventListener('click', (event) => {
+      const button = event.target?.closest?.('#aiBtn');
+      if (!button) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+      runAI();
+    }, true);
+  }
+
+  async function init() {
+    addStyles();
+    createPlanCard();
+    interceptAIButton();
+
+    if (!API) {
+      setStatus('Set CHROMETRY_API_BASE_URL to enable checkout and Pro AI.');
+    }
+
+    await activateFromCheckout();
+    await verify();
+
+    if (window.ChrometryAds) {
+      window.ChrometryAds.setEnabled(!state.pro);
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init, { once: true });
+  } else {
+    init();
+  }
 })();
