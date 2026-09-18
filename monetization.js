@@ -41,6 +41,7 @@
       .chrometry-pro-actions .action-btn{margin-top:0;flex:1 1 150px}
       .chrometry-pro-actions .quiet-btn{margin-top:0;min-height:40px;font-size:10px}
       .chrometry-billing-status{min-height:18px;margin-top:8px;font-size:9px;color:var(--muted)}
+      .chrometry-license{display:grid;gap:7px;margin-top:10px}.chrometry-license input{min-height:40px;border-radius:12px;border:1px solid rgba(127,127,127,.22);padding:0 10px;background:rgba(127,127,127,.06);color:inherit;font:inherit;font-size:10px}.chrometry-code{display:grid;gap:6px;margin-top:10px;padding:10px;border-radius:12px;background:rgba(127,127,127,.07);font-size:9px}.chrometry-code code{font-size:8px;line-height:1.4;word-break:break-all;user-select:all}
       .chrometry-pro-card.pro-active{box-shadow:inset 0 0 0 1px rgba(114,220,147,.28),0 12px 30px rgba(0,0,0,.05)}
       .chrometry-lock{margin-left:6px;font-size:9px;font-weight:800;color:var(--muted)}
       .chrometry-modal{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;padding:20px;background:rgba(0,0,0,.46);backdrop-filter:blur(18px)}
@@ -72,7 +73,7 @@
         <button id="upgrade" class="action-btn" type="button">Upgrade to Pro</button>
         <button id="manage" class="quiet-btn" type="button" hidden>Manage subscription</button>\n        <a id="freeWeb" class="quiet-btn" href="#" target="_blank" rel="noopener">Use free web version</a>
       </div>
-      <div class="chrometry-license"><input id="licenseInput" type="text" placeholder="Paste Pro activation code" autocomplete="off" spellcheck="false"><button id="activateBtn" class="quiet-btn" type="button">Activate existing Pro</button></div>\n      <div id="billingStatus" class="chrometry-billing-status" aria-live="polite"></div>`;
+      <div class="chrometry-license"><input id="licenseInput" type="text" placeholder="Paste Pro activation code" autocomplete="off" spellcheck="false"><button id="activateBtn" class="quiet-btn" type="button">Activate existing Pro</button></div>\n      <div id="billingStatus" class="chrometry-billing-status" aria-live="polite"></div><div class="chrometry-code" hidden><b>Activation code</b><code id="activationCode"></code><small>Copy this code into the extension after purchasing on the web.</small></div>`;
     document.querySelector('.workspace aside')?.prepend(card);
     const freeWeb = $('freeWeb'); if (freeWeb) freeWeb.href = WEB_URL;
     $('upgrade')?.addEventListener('click', checkout);
