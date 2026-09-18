@@ -2,10 +2,11 @@
   "manifest_version": 3,
   "name": "Chrometry — Game Colorimetry",
   "short_name": "Chrometry",
-  "version": "1.2.0",
-  "description": "Analyze game and image colorimetry locally. Use Chrometry Pro for server-backed Scene Look AI; purchase on the Chrometry website and unlock this same extension.",
+  "version": "1.3.0",
+  "description": "Live webpage color picker and game colorimetry tools. Pick colors directly from any webpage without manually taking screenshots.",
   "action": {
-    "default_title": "Open Chrometry",
+    "default_title": "Chrometry — Pick a color",
+    "default_popup": "popup.html",
     "default_icon": {
       "48": "chrometry-48.png",
       "128": "chrometry-128.png"
@@ -19,6 +20,8 @@
     "128": "chrometry-128.png"
   },
   "permissions": [
+    "activeTab",
+    "scripting",
     "storage"
   ],
   "minimum_chrome_version": "116",
