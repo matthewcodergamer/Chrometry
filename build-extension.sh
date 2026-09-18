@@ -19,7 +19,23 @@ cp manifest.json extension-background.js index.html styles.css ios-polish.css ap
 printf "window.CHROMETRY_API_BASE_URL = %s;\nwindow.CHROMETRY_WEB_URL = %s;\n" "$(printf '%s' "$API_BASE" | python3 -c 'import json,sys; print(json.dumps(sys.stdin.read()))')" "$(printf '%s' "$WEB_URL" | python3 -c 'import json,sys; print(json.dumps(sys.stdin.read()))')" > dist/chrometry-extension/chrometry-config.js
 python3 - <<'PY'
 from pathlib import Path
-p=Path('dist/chrometry-extension/index.html')
+from urllib.parse import urlparse
+import json
+
+root=Path('dist/chrometry-extension')
+manifest_path=root/'manifest.json'
+manifest=json.loads(manifest_path.read_text())
+api_url='${API_BASE}'
+if api_url:
+    parsed=urlparse(api_url)
+    if parsed.scheme not in ('http','https') or not parsed.netloc:
+        raise SystemExit('CHROMETRY_API_BASE_URL must be a valid http(s) URL')
+    manifest['host_permissions']=[f'{parsed.scheme}://{parsed.netloc}/*']
+else:
+    manifest.pop('host_permissions', None)
+manifest_path.write_text(json.dumps(manifest, indent=2)+'\n')
+
+p=root/'index.html'
 s=p.read_text()
 needle='  <script src="./app.js"></script>'
 s=s.replace(needle,'  <script src="./chrometry-config.js"></script>\n'+needle)
