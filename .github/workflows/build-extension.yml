@@ -33,6 +33,7 @@ jobs:
       - name: Build extension
         env:
           CHROMETRY_API_BASE_URL: ${{ inputs.api_base || vars.CHROMETRY_API_BASE_URL || '' }}
+          CHROMETRY_WEB_URL: ${{ vars.CHROMETRY_WEB_URL || '' }}
         run: bash build-extension.sh
       - name: Upload extension ZIP
         uses: actions/upload-artifact@v4
