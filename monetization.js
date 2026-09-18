@@ -70,12 +70,14 @@
       <div id="planCopy" class="chrometry-pro-copy">Local palette extraction stays free. The web version is free to use and may show Google AdSense ads. Pro unlocks Scene Look AI and removes web ads. The extension local analyzer remains available without payment.</div>
       <div class="chrometry-pro-actions">
         <button id="upgrade" class="action-btn" type="button">Upgrade to Pro</button>
-        <button id="manage" class="quiet-btn" type="button" hidden>Manage subscription</button>
+        <button id="manage" class="quiet-btn" type="button" hidden>Manage subscription</button>\n        <a id="freeWeb" class="quiet-btn" href="#" target="_blank" rel="noopener">Use free web version</a>
       </div>
-      <div id="billingStatus" class="chrometry-billing-status" aria-live="polite"></div>`;
+      <div class="chrometry-license"><input id="licenseInput" type="text" placeholder="Paste Pro activation code" autocomplete="off" spellcheck="false"><button id="activateBtn" class="quiet-btn" type="button">Activate existing Pro</button></div>\n      <div id="billingStatus" class="chrometry-billing-status" aria-live="polite"></div>`;
     document.querySelector('.workspace aside')?.prepend(card);
+    const freeWeb = $('freeWeb'); if (freeWeb) freeWeb.href = WEB_URL;
     $('upgrade')?.addEventListener('click', checkout);
     $('manage')?.addEventListener('click', openPortal);
+    $('activateBtn')?.addEventListener('click', activateCode);
   }
 
   function setPro(active) {
@@ -92,13 +94,13 @@
     if (state.pro) {
       if (title) title.textContent = 'Chrometry Pro';
       if (badge) { badge.textContent = 'PRO'; badge.className = 'status-pill'; }
-      if (copy) copy.textContent = 'Pro is active. Ads are disabled and AI requests run through Chrometry\'s secure gateway.';
+      if (copy) copy.textContent = 'Pro is active. Pro is active. Scene Look AI is unlocked. On the web version, Google AdSense is disabled for this Pro session.';
       if (upgrade) upgrade.hidden = true;
       if (manage) manage.hidden = false;
     } else {
       if (title) title.textContent = 'Free plan';
       if (badge) { badge.textContent = 'FREE'; badge.className = 'status-pill neutral'; }
-      if (copy) copy.textContent = 'Local palette extraction stays free. Free users see clearly labeled sponsored recommendations; Pro removes ads and unlocks secure Scene Look AI.';
+      if (copy) copy.textContent = 'The web version is free to use and may show Google AdSense ads. Pro unlocks Scene Look AI and removes web ads. The extension local analyzer remains available without payment.';
       if (upgrade) upgrade.hidden = false;
       if (manage) manage.hidden = true;
     }
@@ -129,6 +131,12 @@
       setStatus(error.message || 'Could not verify Pro.', true);
       return false;
     }
+  }
+
+  async function activateCode() {
+    const input = $('licenseInput'); const value = input?.value?.trim();
+    if (!value) { setStatus('Paste your activation code first.', true); return; }
+    saveToken(value); const active = await verify(); if (active && input) input.value = '';
   }
 
   async function checkout() {
@@ -168,9 +176,11 @@
       if (!response.ok || !data.token) throw new Error(data.error || 'Purchase verification failed.');
 
       saveToken(data.token);
+      state.token = data.token;
+      const code = $('activationCode'); if (code) { code.textContent = data.token; code.parentElement.hidden = false; }
       window.history.replaceState({}, '', window.location.pathname);
       await verify();
-      setStatus('Pro activated. Ads are now disabled and AI is ready.');
+      setStatus('Pro activated. Your activation code is available below.');
     } catch (error) {
       setStatus(error.message || 'Purchase activation failed.', true);
     }
