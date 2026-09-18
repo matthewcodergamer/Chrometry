@@ -16,7 +16,7 @@ else
   exit 1
 fi
 cp manifest.json extension-background.js index.html styles.css ios-polish.css app.js ui-polish.js adsense.js adsense-config.js monetization.js chrometry-icon.svg dist/chrometry-extension/
-printf "window.CHROMETRY_API_BASE_URL = %s;\nwindow.CHROMETRY_WEB_URL = %s;\n" "$(printf '%s' "$API_BASE" | python3 -c 'import json,sys; print(json.dumps(sys.stdin.read()))')" > dist/chrometry-extension/chrometry-config.js
+printf "window.CHROMETRY_API_BASE_URL = %s;\nwindow.CHROMETRY_WEB_URL = %s;\n" "$(printf '%s' "$API_BASE" | python3 -c 'import json,sys; print(json.dumps(sys.stdin.read()))')" "$(printf '%s' "$WEB_URL" | python3 -c 'import json,sys; print(json.dumps(sys.stdin.read()))')" > dist/chrometry-extension/chrometry-config.js
 python3 - <<'PY'
 from pathlib import Path
 p=Path('dist/chrometry-extension/index.html')
