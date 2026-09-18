@@ -1,0 +1,2 @@
+const {json,cors,bearer,activeSubscription}=require('./_shared');
+module.exports=async(req,res)=>{cors(res);if(req.method==='OPTIONS')return res.status(204).end();if(req.method!=='GET')return json(res,405,{error:'Method not allowed.'});try{const {payload,subscription,active}=await activeSubscription(bearer(req));return json(res,200,{active,email:payload.email||null,status:subscription.status,current_period_end:subscription.current_period_end||null});}catch(e){return json(res,401,{active:false,error:e.message||'License verification failed.'});}};
