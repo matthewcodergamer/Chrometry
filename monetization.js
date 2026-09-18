@@ -2,6 +2,7 @@
   'use strict';
 
   const API = window.CHROMETRY_API_BASE_URL || localStorage.getItem('chrometry-api-base') || '';
+  const WEB_URL = window.CHROMETRY_WEB_URL || 'https://matthewcodergamer.github.io/Chrometry/';
   const LICENSE_KEY = 'chrometry-pro-license-v1';
   const state = { token: null, pro: false, busy: false };
 
@@ -66,7 +67,7 @@
         <div><span class="section-kicker">CHROMETRY PRO</span><h2 id="planTitle">Free plan</h2></div>
         <span id="planBadge" class="status-pill neutral">FREE</span>
       </div>
-      <div id="planCopy" class="chrometry-pro-copy">Local palette extraction stays free. Free users see clearly labeled sponsored recommendations; Pro removes ads and unlocks secure Scene Look AI.</div>
+      <div id="planCopy" class="chrometry-pro-copy">Local palette extraction stays free. The web version is free to use and may show Google AdSense ads. Pro unlocks Scene Look AI and removes web ads. The extension local analyzer remains available without payment.</div>
       <div class="chrometry-pro-actions">
         <button id="upgrade" class="action-btn" type="button">Upgrade to Pro</button>
         <button id="manage" class="quiet-btn" type="button" hidden>Manage subscription</button>
@@ -102,7 +103,7 @@
       if (manage) manage.hidden = true;
     }
 
-    if (window.ChrometryAds) window.ChrometryAds.setEnabled(!state.pro);
+    if (window.ChrometryWebAds) window.ChrometryWebAds.setEnabled(!state.pro);
   }
 
   async function verify() {
@@ -345,8 +346,8 @@
     await activateFromCheckout();
     await verify();
 
-    if (window.ChrometryAds) {
-      window.ChrometryAds.setEnabled(!state.pro);
+    if (window.ChrometryWebAds) {
+      window.ChrometryWebAds.setEnabled(!state.pro);
     }
   }
 
