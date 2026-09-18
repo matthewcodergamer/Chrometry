@@ -4,7 +4,7 @@
   const API = window.CHROMETRY_API_BASE_URL || localStorage.getItem('chrometry-api-base') || '';
   const WEB_URL = window.CHROMETRY_WEB_URL || 'https://matthewcodergamer.github.io/Chrometry/';
   const LICENSE_KEY = 'chrometry-pro-license-v1';
-  const state = { token: null, pro: false, busy: false };
+  const state = { token: null, pro: false, busy: false };\n  const IS_EXTENSION = location.protocol === 'chrome-extension:' || location.protocol === 'moz-extension:';
 
   const $ = (id) => document.getElementById(id);
   const api = (path) => API ? `${API.replace(/\/$/, '')}${path}` : path;
@@ -12,16 +12,35 @@
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
   }[c]));
 
-  function readToken() {
-    try { return localStorage.getItem(LICENSE_KEY); } catch { return null; }
+  async function readToken() {
+    try {
+      if (IS_EXTENSION && globalThis.chrome?.storage?.local) {
+        const result = await chrome.storage.local.get([LICENSE_KEY]);
+        return result[LICENSE_KEY] || null;
+      }
+      return localStorage.getItem(LICENSE_KEY);
+    } catch { return null; }
   }
 
-  function saveToken(value) {
-    try { localStorage.setItem(LICENSE_KEY, value); } catch {}
+  async function saveToken(value) {
+    if (!value) return;
+    try {
+      if (IS_EXTENSION && globalThis.chrome?.storage?.local) {
+        await chrome.storage.local.set({ [LICENSE_KEY]: value });
+      } else {
+        localStorage.setItem(LICENSE_KEY, value);
+      }
+    } catch {}
   }
 
-  function clearToken() {
-    try { localStorage.removeItem(LICENSE_KEY); } catch {}
+  async function clearToken() {
+    try {
+      if (IS_EXTENSION && globalThis.chrome?.storage?.local) {
+        await chrome.storage.local.remove([LICENSE_KEY]);
+      } else {
+        localStorage.removeItem(LICENSE_KEY);
+      }
+    } catch {}
   }
 
   function setStatus(message, error = false) {
@@ -71,14 +90,16 @@
       <div id="planCopy" class="chrometry-pro-copy">Local palette extraction stays free. The web version is free to use and may show Google AdSense ads. Pro unlocks Scene Look AI and removes web ads. The extension local analyzer remains available without payment.</div>
       <div class="chrometry-pro-actions">
         <button id="upgrade" class="action-btn" type="button">Upgrade to Pro</button>
-        <button id="manage" class="quiet-btn" type="button" hidden>Manage subscription</button>\n        <a id="freeWeb" class="quiet-btn" href="#" target="_blank" rel="noopener">Use free web version</a>
+        <button id="manage" class="quiet-btn" type="button" hidden>Manage subscription</button>
+        <a id="freeWeb" class="quiet-btn" href="#" target="_blank" rel="noopener">Use free web version</a>
+        <button id="activateExtension" class="quiet-btn" type="button" hidden>Activate Pro in Chrome</button>
       </div>
       <div class="chrometry-license"><input id="licenseInput" type="text" placeholder="Paste Pro activation code" autocomplete="off" spellcheck="false"><button id="activateBtn" class="quiet-btn" type="button">Activate existing Pro</button></div>\n      <div id="billingStatus" class="chrometry-billing-status" aria-live="polite"></div><div class="chrometry-code" hidden><b>Activation code</b><code id="activationCode"></code><small>Copy this code into the extension after purchasing on the web.</small></div>`;
     document.querySelector('.workspace aside')?.prepend(card);
     const freeWeb = $('freeWeb'); if (freeWeb) freeWeb.href = WEB_URL;
     $('upgrade')?.addEventListener('click', checkout);
     $('manage')?.addEventListener('click', openPortal);
-    $('activateBtn')?.addEventListener('click', activateCode);
+    $('activateBtn')?.addEventListener('click', activateCode);\n    $('activateExtension')?.addEventListener('click', () => bridgeProToExtension(state.token));
   }
 
   function setPro(active) {
@@ -106,11 +127,11 @@
       if (manage) manage.hidden = true;
     }
 
-    if (window.ChrometryWebAds) window.ChrometryWebAds.setEnabled(!state.pro);
+    if (window.ChrometryWebAds) window.ChrometryWebAds.setEnabled(!state.pro);\n    const activateExtension = $('activateExtension');\n    if (activateExtension) activateExtension.hidden = IS_EXTENSION || !state.pro;
   }
 
   async function verify() {
-    state.token = readToken();
+    state.token = await readToken();
     if (!state.token) {
       setPro(false);
       return false;
@@ -121,13 +142,13 @@
         headers: { Authorization: 'Bearer ' + state.token }
       });
       const data = await response.json();
-      if (data.token) { saveToken(data.token); state.token = data.token; }
+      if (data.token) { await saveToken(data.token); state.token = data.token; }
       if (!response.ok || !data.active) throw new Error(data.error || 'Subscription is not active.');
       setPro(true);
       setStatus('Active subscription');
       return true;
     } catch (error) {
-      clearToken();
+      await clearToken();
       state.token = null;
       setPro(false);
       setStatus(error.message || 'Could not verify Pro.', true);
@@ -138,7 +159,7 @@
   async function activateCode() {
     const input = $('licenseInput'); const value = input?.value?.trim();
     if (!value) { setStatus('Paste your activation code first.', true); return; }
-    saveToken(value); const active = await verify(); if (active && input) input.value = '';
+    await saveToken(value); const active = await verify(); if (active && input) input.value = '';
   }
 
   async function checkout() {
@@ -150,7 +171,7 @@
       const response = await fetch(api('/api/checkout'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan: 'monthly' })
+        body: JSON.stringify({ plan: 'monthly', source: IS_EXTENSION ? 'extension' : 'web' })
       });
       const data = await response.json();
       if (!response.ok || !data.url) throw new Error(data.error || 'Checkout failed.');
@@ -182,9 +203,32 @@
       const code = $('activationCode'); if (code) { code.textContent = data.token; code.parentElement.hidden = false; }
       window.history.replaceState({}, '', window.location.pathname);
       await verify();
-      setStatus('Pro activated. Your activation code is available below.');
+      setStatus('Pro activated. You can now activate the installed Chrome extension.');\n      await bridgeProToExtension(data.token);
     } catch (error) {
       setStatus(error.message || 'Purchase activation failed.', true);
+    }
+  }
+
+  async function bridgeProToExtension(token) {
+    if (IS_EXTENSION || !token) return false;
+    const extensionId = window.CHROMETRY_EXTENSION_ID || '';
+    if (!extensionId || !globalThis.chrome?.runtime?.sendMessage) {
+      setStatus('Pro is active. Install the Chrome extension, then return here to activate it.', false);
+      return false;
+    }
+
+    setStatus('Connecting Pro to your Chrome extension…');
+    try {
+      const response = await chrome.runtime.sendMessage(extensionId, {
+        type: 'CHROMETRY_PRO_TOKEN',
+        token
+      });
+      if (!response?.ok) throw new Error(response?.error || 'Extension activation failed.');
+      setStatus('Pro is active in this browser. Open the Chrometry extension to use Pro.');
+      return true;
+    } catch {
+      setStatus('Pro is active. If the extension is installed, click Activate Pro in Chrome again; otherwise install the extension first.', false);
+      return false;
     }
   }
 
