@@ -203,7 +203,7 @@
       const data = await response.json();
       if (!response.ok || !data.token) throw new Error(data.error || 'Purchase verification failed.');
 
-      saveToken(data.token);
+      await saveToken(data.token);
       state.token = data.token;
       const code = $('activationCode'); if (code) { code.textContent = data.token; code.parentElement.hidden = false; }
       window.history.replaceState({}, '', window.location.pathname);
@@ -276,7 +276,7 @@
     modal.innerHTML = `
       <div class="chrometry-modal-card">
         <h3>Unlock Chrometry Pro</h3>
-        <p>Pro removes sponsored ads and adds secure visual AI, game identification, material reconstruction guidance and research-backed rendering notes.</p>
+        <p>Pro removes website ads and adds secure visual AI, game identification, material reconstruction guidance and research-backed rendering notes.</p>
         <div class="chrometry-pro-actions">
           <button id="modalUpgrade" class="action-btn" type="button">Continue to Stripe</button>
           <button id="modalClose" class="quiet-btn" type="button">Not now</button>
