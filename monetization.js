@@ -4,7 +4,8 @@
   const API = window.CHROMETRY_API_BASE_URL || localStorage.getItem('chrometry-api-base') || '';
   const WEB_URL = window.CHROMETRY_WEB_URL || 'https://matthewcodergamer.github.io/Chrometry/';
   const LICENSE_KEY = 'chrometry-pro-license-v1';
-  const state = { token: null, pro: false, busy: false };\n  const IS_EXTENSION = location.protocol === 'chrome-extension:' || location.protocol === 'moz-extension:';
+  const state = { token: null, pro: false, busy: false };
+  const IS_EXTENSION = location.protocol === 'chrome-extension:' || location.protocol === 'moz-extension:';
 
   const $ = (id) => document.getElementById(id);
   const api = (path) => API ? `${API.replace(/\/$/, '')}${path}` : path;
@@ -94,12 +95,14 @@
         <a id="freeWeb" class="quiet-btn" href="#" target="_blank" rel="noopener">Use free web version</a>
         <button id="activateExtension" class="quiet-btn" type="button" hidden>Activate Pro in Chrome</button>
       </div>
-      <div class="chrometry-license"><input id="licenseInput" type="text" placeholder="Paste Pro activation code" autocomplete="off" spellcheck="false"><button id="activateBtn" class="quiet-btn" type="button">Activate existing Pro</button></div>\n      <div id="billingStatus" class="chrometry-billing-status" aria-live="polite"></div><div class="chrometry-code" hidden><b>Activation code</b><code id="activationCode"></code><small>Copy this code into the extension after purchasing on the web.</small></div>`;
+      <div class="chrometry-license"><input id="licenseInput" type="text" placeholder="Paste Pro activation code" autocomplete="off" spellcheck="false"><button id="activateBtn" class="quiet-btn" type="button">Activate existing Pro</button></div>
+      <div id="billingStatus" class="chrometry-billing-status" aria-live="polite"></div><div class="chrometry-code" hidden><b>Activation code</b><code id="activationCode"></code><small>Copy this code into the extension after purchasing on the web.</small></div>`;
     document.querySelector('.workspace aside')?.prepend(card);
     const freeWeb = $('freeWeb'); if (freeWeb) freeWeb.href = WEB_URL;
     $('upgrade')?.addEventListener('click', checkout);
     $('manage')?.addEventListener('click', openPortal);
-    $('activateBtn')?.addEventListener('click', activateCode);\n    $('activateExtension')?.addEventListener('click', () => bridgeProToExtension(state.token));
+    $('activateBtn')?.addEventListener('click', activateCode);
+    $('activateExtension')?.addEventListener('click', () => bridgeProToExtension(state.token));
   }
 
   function setPro(active) {
@@ -116,7 +119,7 @@
     if (state.pro) {
       if (title) title.textContent = 'Chrometry Pro';
       if (badge) { badge.textContent = 'PRO'; badge.className = 'status-pill'; }
-      if (copy) copy.textContent = 'Pro is active. Pro is active. Scene Look AI is unlocked. On the web version, Google AdSense is disabled for this Pro session.';
+      if (copy) copy.textContent = 'Pro is active. Scene Look AI is unlocked. On the web version, Google AdSense is disabled for this Pro session.';
       if (upgrade) upgrade.hidden = true;
       if (manage) manage.hidden = false;
     } else {
@@ -127,7 +130,9 @@
       if (manage) manage.hidden = true;
     }
 
-    if (window.ChrometryWebAds) window.ChrometryWebAds.setEnabled(!state.pro);\n    const activateExtension = $('activateExtension');\n    if (activateExtension) activateExtension.hidden = IS_EXTENSION || !state.pro;
+    if (window.ChrometryWebAds) window.ChrometryWebAds.setEnabled(!state.pro);
+    const activateExtension = $('activateExtension');
+    if (activateExtension) activateExtension.hidden = IS_EXTENSION || !state.pro;
   }
 
   async function verify() {
@@ -203,7 +208,8 @@
       const code = $('activationCode'); if (code) { code.textContent = data.token; code.parentElement.hidden = false; }
       window.history.replaceState({}, '', window.location.pathname);
       await verify();
-      setStatus('Pro activated. You can now activate the installed Chrome extension.');\n      await bridgeProToExtension(data.token);
+      setStatus('Pro activated. You can now activate the installed Chrome extension.');
+      await bridgeProToExtension(data.token);
     } catch (error) {
       setStatus(error.message || 'Purchase activation failed.', true);
     }
