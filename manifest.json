@@ -1,13 +1,33 @@
 {
-  "manifest_version":3,
-  "name":"Chrometry — Game Colorimetry",
-  "short_name":"Chrometry",
-  "version":"1.2.0",
-  "description":"Analyze game and image colorimetry locally for free; unlock Chrometry Pro for AI scene reconstruction. The full free web version is available with advertising.",
-  "action":{"default_title":"Open Chrometry","default_icon":{"48":"chrometry-48.png","128":"chrometry-128.png"}},
-  "background":{"service_worker":"extension-background.js"},
-  "icons":{"48":"chrometry-48.png","128":"chrometry-128.png"},
-  "permissions":["storage"],
-  "host_permissions":["https://YOUR-PRODUCTION-API.example.com/*"],
-  "minimum_chrome_version":"116"
+  "manifest_version": 3,
+  "name": "Chrometry — Game Colorimetry",
+  "short_name": "Chrometry",
+  "version": "1.2.0",
+  "description": "Analyze game and image colorimetry locally. Use Chrometry Pro for server-backed Scene Look AI; purchase on the Chrometry website and unlock this same extension.",
+  "action": {
+    "default_title": "Open Chrometry",
+    "default_icon": {
+      "48": "chrometry-48.png",
+      "128": "chrometry-128.png"
+    }
+  },
+  "background": {
+    "service_worker": "extension-background.js"
+  },
+  "icons": {
+    "48": "chrometry-48.png",
+    "128": "chrometry-128.png"
+  },
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "https://YOUR-PRODUCTION-API.example.com/*"
+  ],
+  "minimum_chrome_version": "116",
+  "externally_connectable": {
+    "matches": [
+      "https://matthewcodergamer.github.io/Chrometry/*"
+    ]
+  }
 }
