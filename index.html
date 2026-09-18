@@ -9,19 +9,20 @@
   <meta name="apple-mobile-web-app-title" content="Chrometry">
   <meta name="format-detection" content="telephone=no">
   <meta name="description" content="Extract perceptual palettes from games and other images with optional AI scene-look reconstruction.">
-  <link rel="manifest" href="./manifest.webmanifest?v=11">
-  <link rel="icon" href="./chrometry-icon.svg?v=11" type="image/svg+xml">
+  <link rel="manifest" href="./manifest.webmanifest?v=13">
+  <link rel="icon" href="./chrometry-icon.svg?v=13" type="image/svg+xml">
   <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon-v11.png">
   <link rel="stylesheet" href="./styles.css">
-  <link rel="stylesheet" href="./ios-polish.css?v=10">
-  <title>Chrometry — Game & Image Palette Analyzer</title>
+  <link rel="stylesheet" href="./ios-polish.css?v=13">
+  <link rel="stylesheet" href="./polish-v13.css?v=13">
+  <title>Chrometry — Palette Analyzer</title>
 </head>
 <body>
   <div class="app-shell">
     <header class="topbar glass">
       <a class="brand" href="#" aria-label="Chrometry home">
-        <span class="brand-mark" aria-hidden="true" style="background-image:url('./chrometry-icon.svg?v=11');background-size:100% 100%;background-repeat:no-repeat;background-position:center;box-shadow:none;filter:none"><i></i><i></i><i></i></span>
-        <span class="brand-copy"><strong>Chrometry</strong><small>GAME COLORIMETRY</small></span>
+        <span class="brand-mark" aria-hidden="true" style="background-image:url('./chrometry-icon.svg?v=13');background-size:100% 100%;background-repeat:no-repeat;background-position:center;box-shadow:none;filter:none"><i></i><i></i><i></i></span>
+        <span class="brand-copy"><strong>Chrometry</strong><small>COLORIMETRY</small></span>
       </a>
       <button id="themeIndicator" class="appearance-indicator" type="button" aria-label="Switch appearance" aria-pressed="false">◐</button>
     </header>
@@ -30,16 +31,16 @@
       <section id="intro" class="hero">
         <div class="hero-copy">
           <div class="eyebrow">PERCEPTUAL PALETTE ENGINE</div>
-          <h1>Capture a game's visual DNA.</h1>
-          <p>Drop in a game screenshot — or any image you want to study. Chrometry measures its perceptual colors, and optional AI reconstructs the scene look: materials, gradients, lighting direction, atmosphere, color grading, and game-specific rendering research when the title is recognized.</p>
+          <h1>Capture an image's visual DNA.</h1>
+          <p>Drop in any image — game screenshot, photo, UI, or render. Chrometry measures its perceptual colors. Optional AI reconstructs materials, lighting, and atmosphere.</p>
           <div class="hero-chips"><span>CIELAB clustering</span><span>Local-first</span><span>Scene Look AI</span></div>
         </div>
 
         <div class="upload-wrap">
-          <div id="dropzone" class="dropzone" role="button" tabindex="0" aria-label="Choose a screenshot">
+          <div id="dropzone" class="dropzone" role="button" tabindex="0" aria-label="Choose an image">
             <input id="fileInput" type="file" accept="image/*" hidden>
             <span class="drop-icon" aria-hidden="true">＋</span>
-            <strong>Choose a screenshot</strong>
+            <strong>Choose an image</strong>
             <span>PNG, JPG, WEBP, HEIC where supported</span>
             <button id="openImageBtn" class="primary-button" type="button">Open image</button>
           </div>
@@ -51,7 +52,7 @@
           <div>
             <section class="card">
               <div class="section-head">
-                <div><span class="section-kicker">SOURCE</span><h2>Screenshot</h2></div>
+                <div><span class="section-kicker">SOURCE</span><h2>Image</h2></div>
                 <button id="replaceBtn" class="quiet-btn" type="button">Replace</button>
               </div>
               <div id="canvasStage" class="canvas-stage">
@@ -59,7 +60,7 @@
                 <div id="sampleBubble" class="sample-bubble hidden"></div>
               </div>
               <div class="image-meta"><span id="imageName">—</span><span id="imageSize">—</span></div>
-              <p class="hint">Tap the image to sample an exact pixel color.</p>
+              <p class="hint">Tap the image to sample an exact pixel color. HEX copies immediately.</p>
             </section>
 
             <section class="card">
@@ -77,12 +78,12 @@
                 <span id="roleMode" class="local-badge">LOCAL</span>
               </div>
               <div id="roleGrid" class="role-grid"></div>
-              <p id="roleHint" class="hint">Local labels are fast visual heuristics. Scene Look AI can identify the game, visible materials, texture-vs-light contribution, sky gradients, light direction, atmosphere and render finish.</p>
+              <p id="roleHint" class="hint">Local labels are fast visual heuristics. Scene Look AI can identify materials, lighting, and atmosphere.</p>
             </section>
           </div>
 
           <aside>
-            <section class="card sticky-card">
+            <section class="card">
               <div class="section-head">
                 <div><span class="section-kicker">ANALYSIS</span><h2>Palette controls</h2></div>
               </div>
@@ -108,7 +109,7 @@
                 <div><span class="section-kicker">SCENE LOOK AI</span><h2>Understand & rebuild</h2></div>
                 <span id="aiBadge" class="status-pill neutral">Optional</span>
               </div>
-              <p class="small-copy">AI studies the screenshot as a rendering problem: objects and materials, base/lit/shadow colors, sky and horizon gradients, directional light, fill and bounce, fog/haze, exposure, tone character and post-process finish. Sign in to a Puter account once for AI access. If it confidently recognizes the game, a second web-research stage checks reliable public technical sources and adds research-informed Three.js guidance.</p>
+              <p class="small-copy">AI studies the image as a rendering problem: materials, lighting, atmosphere, and finish. Sign in to Puter once for AI access.</p>
               <button id="aiBtn" class="action-btn secondary" type="button">Reconstruct scene look with AI</button>
               <div id="aiOutput" class="ai-output empty-state">No Scene Look analysis yet. Local palette extraction works without it.</div>
             </section>
@@ -122,7 +123,7 @@
                 <button class="export-tab" data-format="css" type="button">CSS</button>
                 <button class="export-tab" data-format="three" type="button">Three.js</button>
               </div>
-              <pre id="exportCode">Analyze a screenshot to generate export code.</pre>
+              <pre id="exportCode">Analyze an image to generate export code.</pre>
               <div class="export-actions">
                 <button id="copyBtn" class="quiet-btn" type="button" aria-label="Copy code" title="Copy code">
                   <svg class="sf-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="11" height="11" rx="2.5"/><path d="M16 8V6.5A2.5 2.5 0 0 0 13.5 4h-7A2.5 2.5 0 0 0 4 6.5v7A2.5 2.5 0 0 0 6.5 16H8"/></svg>
@@ -142,9 +143,10 @@
 
   <script src="https://js.puter.com/v2/"></script>
   <script src="./app.js"></script>
-  <script src="./ui-polish.js?v=12"></script>
+  <script src="./ui-polish.js?v=13"></script>
   <script src="./ai-look-v2.js?v=1"></script>
   <script src="./game-research.js?v=1"></script>
   <script src="./ai-runtime.js?v=1"></script>
+  <script src="./polish-v13.js?v=13"></script>
 </body>
 </html>

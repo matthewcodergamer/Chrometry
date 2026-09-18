@@ -1,0 +1,12 @@
+{
+  "manifest_version": 3,
+  "name": "Chrometry Eyedropper",
+  "version": "1.3.0",
+  "description": "Sample any pixel on the page, copy HEX instantly, and send colors to Chrometry.",
+  "action": {
+    "default_title": "Chrometry",
+    "default_popup": "popup.html"
+  },
+  "permissions": ["activeTab", "storage", "clipboardWrite"],
+  "host_permissions": ["<all_urls>"]
+}
