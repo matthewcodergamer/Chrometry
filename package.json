@@ -1,0 +1,7 @@
+{
+  "name":"chrometry-pro",
+  "private":true,
+  "version":"1.0.0",
+  "engines":{"node":">=20"},
+  "dependencies":{"openai":"^5.12.2","stripe":"^18.5.0"}
+}
