@@ -1,0 +1,13 @@
+{
+  "manifest_version":3,
+  "name":"Chrometry — Game Colorimetry",
+  "short_name":"Chrometry",
+  "version":"1.0.0",
+  "description":"Extract perceptual palettes from screenshots and unlock AI-powered scene reconstruction with Chrometry Pro.",
+  "action":{"default_title":"Open Chrometry","default_icon":{"48":"chrometry-48.png","128":"chrometry-128.png"}},
+  "background":{"service_worker":"extension-background.js"},
+  "icons":{"48":"chrometry-48.png","128":"chrometry-128.png"},
+  "permissions":["storage"],
+  "host_permissions":["https://*.vercel.app/*"],
+  "minimum_chrome_version":"116"
+}
