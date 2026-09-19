@@ -119,6 +119,7 @@
 
   async function analyzeLocal(){
     if(!state.image)return;
+    if(window.ChrometryLimits && !window.ChrometryLimits.allow('analysis')) return;
     if(state.analysisMode==='ai-refined')resetAIState();
     const k=Number(els.colorCount.value),detail=Number(els.detail.value);
     els.analyzeBtn.disabled=true;els.paletteStatus.textContent='Analyzing';
@@ -132,6 +133,7 @@
       state.palette=clusters.map((c,i)=>decorateCluster(c,i)).sort((a,b)=>b.coverage-a.coverage);state.localPalette=state.palette.map(c=>({...c}));state.roles=inferGenericRoles(state.palette);
       renderAll();progress(100,'Complete');els.paletteStatus.textContent='Measured';els.roleMode.textContent='LOCAL';
       log(`Finished. ${state.palette.length} perceptual colors extracted.`);
+      if(window.ChrometryLimits) window.ChrometryLimits.consume('analysis');
     }catch(err){console.error(err);progress(0,'Error');els.paletteStatus.textContent='Error';log(`Analysis failed: ${err.message||err}`);}finally{els.analyzeBtn.disabled=false;}
   }
 

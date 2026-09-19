@@ -21,9 +21,9 @@
   <link rel="manifest" href="./manifest.webmanifest?v=14">
   <link rel="icon" href="./chrometry-icon.svg?v=14" type="image/svg+xml">
   <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon-v11.png">
-  <link rel="stylesheet" href="./styles.css?v=14">
-  <link rel="stylesheet" href="./ios-polish.css?v=14">
-  <link rel="stylesheet" href="./polish-v13.css?v=14">
+  <link rel="stylesheet" href="./styles.css?v=15">
+  <link rel="stylesheet" href="./ios-polish.css?v=15">
+  <link rel="stylesheet" href="./polish-v13.css?v=15">
   <title>Chrometry — Palette Analyzer</title>
 </head>
 <body>
@@ -104,6 +104,7 @@
             <section class="card">
               <div class="section-head">
                 <div><span class="section-kicker">ANALYSIS</span><h2>Palette controls</h2></div>
+                <span id="quotaChip" class="quota-chip">3 of 3 left today</span>
               </div>
               <div class="control-row">
                 <label for="colorCount"><span>Palette size</span><b id="colorCountValue">10</b></label>
@@ -125,9 +126,9 @@
             <section class="card ai-card-shell">
               <div class="section-head">
                 <div><span class="section-kicker">SCENE LOOK AI</span><h2>Understand & rebuild</h2></div>
-                <span id="aiBadge" class="status-pill neutral">Optional</span>
+                <span class="quota-stack"><span id="aiQuotaChip" class="quota-chip">1 free today</span><span id="aiBadge" class="status-pill neutral">Optional</span></span>
               </div>
-              <p class="small-copy">AI studies the image as a rendering problem: materials, lighting, atmosphere, and finish. Sign in to Puter once for AI access.</p>
+              <p class="small-copy">AI studies the image as a rendering problem: materials, lighting, atmosphere, and finish. Sign in to Puter once for AI access. Free includes one Scene Look per day.</p>
               <button id="aiBtn" class="action-btn secondary" type="button">Reconstruct scene look with AI</button>
               <div id="aiOutput" class="ai-output empty-state">No Scene Look analysis yet. Local palette extraction works without it.</div>
             </section>
@@ -159,12 +160,13 @@
     </main>
   </div>
 
+  <script src="./limits.js?v=15"></script>
   <script src="https://js.puter.com/v2/"></script>
-  <script src="./app.js?v=14"></script>
-  <script src="./ui-polish.js?v=14"></script>
-  <script src="./ai-look-v2.js?v=1"></script>
+  <script src="./app.js?v=15"></script>
+  <script src="./ui-polish.js?v=15"></script>
+  <script src="./ai-look-v2.js?v=15"></script>
   <script src="./game-research.js?v=1"></script>
   <script src="./ai-runtime.js?v=1"></script>
-  <script src="./polish-v13.js?v=14"></script>
+  <script src="./polish-v13.js?v=15"></script>
 </body>
 </html>

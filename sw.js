@@ -1,6 +1,6 @@
-const CACHE='chrometry-final-v1-14';
+const CACHE='chrometry-final-v1-15';
 const CORE=[
-  './','./index.html','./styles.css','./ios-polish.css','./polish-v13.css','./app.js','./ui-polish.js','./polish-v13.js','./ai-look-v2.js','./game-research.js','./ai-runtime.js','./manifest.webmanifest','./chrometry-icon.svg','./pro.html'
+  './','./index.html','./styles.css','./ios-polish.css','./polish-v13.css','./limits.js','./app.js','./ui-polish.js','./polish-v13.js','./ai-look-v2.js','./game-research.js','./ai-runtime.js','./manifest.webmanifest','./chrometry-icon.svg','./pro.html'
 ];
 self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
