@@ -118,7 +118,7 @@
   }
 
   function chipText(kind) {
-    if (isPro()) return kind === 'ai' ? 'Unlimited' : 'Pro';
+    if (isPro()) return 'Unlimited';
     const left = remaining(kind);
     const max = LIMITS[kind];
     if (kind === 'ai') {
